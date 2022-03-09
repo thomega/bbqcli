@@ -68,22 +68,15 @@ type mode =
 
 let _ =
   let mode = ref Settings in
-  let usage =
-    "usage: " ^ my_name ^ " ..." in
+  let usage = "usage: " ^ my_name ^ " ..." in
   let options =
     Arg.align
-      [ ("-d", Arg.Unit (fun () -> mode := Data),
-         " get the /data");
-        ("-i", Arg.Unit (fun () -> mode := Info),
-         " get the /info");
-        ("-s", Arg.Unit (fun () -> mode := Settings),
-         " get the /settings");
-        ("-t", Arg.Int (fun ch -> mode := Temp ch),
-         "channel get the temperature");
-        ("-T", Arg.Unit (fun () -> mode := Temps),
-         " get the temperatures");
-        ("-b", Arg.Unit (fun () -> mode := Battery),
-         " get the battery status");
+      [ ("-d", Arg.Unit (fun () -> mode := Data),     " get the /data");
+        ("-i", Arg.Unit (fun () -> mode := Info),     " get the /info");
+        ("-s", Arg.Unit (fun () -> mode := Settings), " get the /settings");
+        ("-t", Arg.Int (fun ch -> mode := Temp ch),   "channel get the temperature");
+        ("-T", Arg.Unit (fun () -> mode := Temps),    " get the temperatures");
+        ("-b", Arg.Unit (fun () -> mode := Battery),  " get the battery status");
         ] in
   Arg.parse options (fun s -> raise (Arg.Bad ("invalid argument: " ^ s))) usage;
   match !mode with
