@@ -2,5 +2,12 @@
   (name wlanthermo)
   (modules wlanthermo)
   (flags (:standard -w -K))
-  (libraries unix yojson))
+  (libraries unix yojson ThoCurl))
 
+(library
+  (name ThoCurl)
+  (flags (:standard -w -K))
+  (ocamlopt_flags (:standard -inline 32))
+  (wrapped false)
+  (modules ThoCurl)
+  (libraries unix))
