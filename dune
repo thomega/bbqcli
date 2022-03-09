@@ -1,5 +1,6 @@
 (executable
   (name wlanthermo)
   (modules wlanthermo)
+  (flags (:standard -w -K))
   (libraries unix yojson))
 
