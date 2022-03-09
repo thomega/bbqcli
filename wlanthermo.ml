@@ -4,15 +4,16 @@ let host_default = "wlanthermo"
 
 let my_name = Sys.argv.(0)
 
+open Printf
 let separator = String.make 72 '='
 
 let print_json s =
   try
     let j = Yojson.Basic.from_string s in
-    Format.printf "%s\n" (Yojson.Basic.pretty_to_string j)
+    printf "%s\n" (Yojson.Basic.pretty_to_string j)
   with
   | Yojson.Json_error msg ->
-     Format.printf "Invalid JSON:\n%s\n%s\n%s\n%s\n" msg separator s separator
+     printf "Invalid JSON:\n%s\n%s\n%s\n%s\n" msg separator s separator
 
 let temperatures data =
   let open Yojson.Basic.Util in
@@ -29,12 +30,11 @@ let temperatures data =
 let temperature_opt data channel =
   List.assoc_opt channel (temperatures data)
 
-open Printf
 open ThoCurl
 let json = Yojson.Basic.from_string
 
 let print_temperature ch =
-  let data = json (get "data") in
+  let data = get "data" |> json in
   begin match temperature_opt data ch with
   | None -> printf "channel #%d: disconneted\n" ch
   | Some t -> printf "channel #%d: %5.1f deg Celsius\n" ch t
@@ -48,7 +48,7 @@ let print_temperatures () =
 
 
 let print_battery () =
-  let data = json (get "data") in
+  let data = get "data" |> json in
   let open Yojson.Basic.Util in
   let system = member "system" data in
   let percentage = system |> member "soc" |> to_int
@@ -87,9 +87,9 @@ let _ =
         ] in
   Arg.parse options (fun s -> raise (Arg.Bad ("invalid argument: " ^ s))) usage;
   match !mode with
-  | Data -> print_json (get "data")
-  | Info -> print_endline (get "info")
-  | Settings -> print_json (get "settings")
+  | Info -> get "info" |> print_endline
+  | Data -> get "data" |> print_json
+  | Settings -> get "settings" |> print_json
   | Temp ch -> print_temperature ch
   | Temps -> print_temperatures ()
   | Battery -> print_battery ()
