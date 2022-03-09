@@ -2,4 +2,4 @@
 
 val get : ?ssl:bool -> ?host:string -> string -> string
 val post : ?ssl:bool -> ?host:string -> string -> string -> string
-val request : ?ssl:bool -> ?host:string -> ?data:string -> string -> string
+val patch : ?ssl:bool -> ?host:string -> string -> string -> string

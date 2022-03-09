@@ -21,27 +21,29 @@ let string_from_channel ic =
   with
   | End_of_file -> Buffer.contents b
 
+let string_from_channel_and_close ic =
+  let s = string_from_channel ic in
+  close_in ic;
+  s
+
 let get ?ssl ?host path =
   let output =
     Unix.open_process_args_in
       curl_path
       [|curl_path; "-s"; "-X"; "GET"; url_of_path ?ssl ?host path|] in
-  let response = string_from_channel output in
-  close_in output;
-  response
+  string_from_channel_and_close output
 
-let post ?ssl ?host path data =
+let post_or_patch ?ssl ?host ~request path data =
   let output, input =
     Unix.open_process_args
       curl_path
-      [|curl_path; "-s"; "-X"; "POST"; url_of_path ?ssl ?host path|] in
+      [|curl_path; "-s"; "-X"; request; url_of_path ?ssl ?host path|] in
   output_string input data;
   close_out input;
-  let response = string_from_channel output in
-  close_in output;
-  response
+  string_from_channel_and_close output
 
-let request ?ssl ?host ?data path =
-  match data with
-  | None | Some "" -> get ?ssl ?host path
-  | Some data -> post ?ssl ?host path data
+let post ?ssl ?host path data =
+  post_or_patch ?ssl ?host ~request:"POST" path data
+
+let patch ?ssl ?host path data =
+  post_or_patch ?ssl ?host ~request:"PATCH" path data
