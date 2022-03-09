@@ -7,4 +7,4 @@ let print_json s =
   Format.printf "%s\n" (Yojson.Safe.pretty_to_string json)
 
 let _ =
-  print_json (ThoCurl.curl "settings")
+  print_json (ThoCurl.request "settings")

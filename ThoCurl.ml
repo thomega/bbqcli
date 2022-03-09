@@ -21,7 +21,7 @@ let string_from_channel ic =
   with
   | End_of_file -> Buffer.contents b
 
-let curl_get ?ssl ?host path =
+let get ?ssl ?host path =
   let output =
     Unix.open_process_args_in
       curl_path
@@ -30,7 +30,7 @@ let curl_get ?ssl ?host path =
   close_in output;
   response
 
-let curl_post ?ssl ?host path data =
+let post ?ssl ?host path data =
   let output, input =
     Unix.open_process_args
       curl_path
@@ -41,7 +41,7 @@ let curl_post ?ssl ?host path data =
   close_in output;
   response
 
-let curl ?ssl ?host ?data path =
+let request ?ssl ?host ?data path =
   match data with
-  | None | Some "" -> curl_get ?ssl ?host path
-  | Some data -> curl_post ?ssl ?host path data
+  | None | Some "" -> get ?ssl ?host path
+  | Some data -> post ?ssl ?host path data
