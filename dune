@@ -1,5 +1,5 @@
 (executable
   (name wlanthermo)
   (modules wlanthermo)
-  (libraries yojson))
+  (libraries unix yojson))
 
