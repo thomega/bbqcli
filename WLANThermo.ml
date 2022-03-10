@@ -16,9 +16,9 @@ let temperatures data =
   let channel_list = data |> member "channel" |> to_list in
   List.fold_left
     (fun acc channel ->
-      let temp = member "temp" channel |> to_float in
+      let temp = channel |> member "temp" |> to_float in
       if temp < 999.0 then
-        (member "number" channel |> to_int, temp) :: acc
+        (channel |> member "number" |> to_int, temp) :: acc
       else
         acc)
     [] channel_list
@@ -46,7 +46,7 @@ let print_temperatures () =
 let print_battery () =
   let data = get "data" |> json in
   let open Yojson.Basic.Util in
-  let system = member "system" data in
+  let system = data |> member "system" in
   let percentage = system |> member "soc" |> to_int
   and charging =  system |> member "charge" |> to_bool in
   printf
