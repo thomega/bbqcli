@@ -1,21 +1,6 @@
 (executable
   (name bbqcli)
-  (modules bbqcli)
+  (modules bbqcli WLANThermo ThoCurl)
   (flags (:standard -w -K))
   (ocamlopt_flags (:standard -inline 32))
-  (libraries WLANThermo ThoCurl))
-
-(library
-  (name WLANThermo)
-  (modules WLANThermo)
-  (flags (:standard -w -K))
-  (ocamlopt_flags (:standard -inline 32))
-  (libraries yojson ThoCurl))
-
-(library
-  (name ThoCurl)
-  (flags (:standard -w -K))
-  (ocamlopt_flags (:standard -inline 32))
-  (wrapped false)
-  (modules ThoCurl)
   (libraries unix yojson))
