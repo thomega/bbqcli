@@ -33,13 +33,22 @@ let get ?ssl ?host path =
       [|curl_path; "-s"; "-X"; "GET"; url_of_path ?ssl ?host path|] in
   string_from_channel_and_close output
 
-let post_or_patch ?ssl ?host ~request path data =
+let post_or_patch_long ?ssl ?host ~request path data =
   let output, input =
     Unix.open_process_args
       curl_path
-      [|curl_path; "-s"; "-X"; request; url_of_path ?ssl ?host path|] in
+      [|curl_path; "-s"; "-X"; request; url_of_path ?ssl ?host path;
+        "-H"; "Content-Type: application/json"; "-d"; "@-"|] in
   output_string input data;
   close_out input;
+  string_from_channel_and_close output
+
+let post_or_patch ?ssl ?host ~request path data =
+  let output =
+    Unix.open_process_args_in
+      curl_path
+      [|curl_path; "-s"; "-X"; request; url_of_path ?ssl ?host path;
+        "-H"; "Content-Type: application/json"; "-d"; data|] in
   string_from_channel_and_close output
 
 let post ?ssl ?host path data =

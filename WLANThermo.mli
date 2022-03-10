@@ -7,3 +7,5 @@ val print_json : string -> unit
 val print_temperature : int -> unit
 val print_temperatures : unit -> unit
 val print_battery : unit -> unit
+
+val set_channel_max : int -> float -> unit

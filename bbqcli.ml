@@ -11,14 +11,18 @@ type mode =
   | Temp of int
   | Temps
   | Battery
+  | Max of float
 
 let _ =
   let mode = ref Settings in
+  let channel = ref 1 in
   let usage = "usage: " ^ my_name ^ " ..." in
   let options =
     Arg.align
-      [ ("-d", Arg.Unit (fun () -> mode := Data),     " get the /data");
+      [ ("-c", Arg.Int (fun ch -> channel := ch),     "channel select channel");
+        ("-d", Arg.Unit (fun () -> mode := Data),     " get the /data");
         ("-i", Arg.Unit (fun () -> mode := Info),     " get the /info");
+        ("-M", Arg.Float (fun t -> mode := Max t),     "temperature set maximum");
         ("-s", Arg.Unit (fun () -> mode := Settings), " get the /settings");
         ("-t", Arg.Int (fun ch -> mode := Temp ch),   "channel get the temperature");
         ("-T", Arg.Unit (fun () -> mode := Temps),    " get the temperatures");
@@ -34,3 +38,4 @@ let _ =
   | Temp ch -> print_temperature ch
   | Temps -> print_temperatures ()
   | Battery -> print_battery ()
+  | Max t -> set_channel_max !channel t
