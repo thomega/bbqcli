@@ -2,37 +2,56 @@
 
 open Printf
 
+type temperature =
+  { channel : int;
+    t : float;
+    t_min : float;
+    t_max : float }
+
 let temperatures data =
   let open Yojson.Basic.Util in
   let channel_list = data |> member "channel" |> to_list in
   List.fold_left
     (fun acc channel ->
-      let temp = channel |> member "temp" |> to_float in
-      if temp < 999.0 then
-        (channel |> member "number" |> to_int, temp) :: acc
+      let t = channel |> member "temp" |> to_float in
+      if t < 999.0 then
+        { channel = channel |> member "number" |> to_int;
+          t;
+          t_min =  channel |> member "min" |> to_float;
+          t_max =  channel |> member "max" |> to_float } :: acc
       else
         acc)
     [] channel_list
 
 let temperature_opt data channel =
-  List.assoc_opt channel (temperatures data)
+  List.find_opt (fun t -> t.channel = channel) (temperatures data)
 
 open ThoCurl
-type json = Yojson.Basic.t
-let json = Yojson.Basic.from_string
+
+let format_temperature t =
+  let value = sprintf "channel #%d: %5.1f deg" t.channel t.t
+  and interval = sprintf "[%5.1f,%5.1f]" t.t_min t.t_max in
+  if t.t_max < t.t_min then
+    sprintf "%s (warning: inverted %s!)" value interval
+  else if t.t < t.t_min then
+    sprintf "%s << %s" value interval
+  else if t.t > t.t_max then
+    sprintf "%s >> %s" value interval
+  else
+    sprintf "%s in %s" value interval
 
 let print_temperature ch =
   let data = get_json "data" in
   begin match temperature_opt data ch with
-  | None -> printf "channel #%d: disconneted\n" ch
-  | Some t -> printf "channel #%d: %5.1f deg Celsius\n" ch t
+  | None -> printf "channel #%d: disconnected\n" ch
+  | Some t -> format_temperature t |> print_endline
   end
 
 let print_temperatures () =
   let data = get_json "data" in
   List.iter
-    (fun (ch, t) -> printf "channel #%d: %5.1f deg Celsius\n" ch t)
-    (List.sort compare (temperatures data))
+    (fun t -> format_temperature t |> print_endline)
+    (List.sort (fun t1 t2 -> compare t1.channel t2.channel) (temperatures data))
 
 let print_battery () =
   let data = get_json "data" in
@@ -105,6 +124,8 @@ let channel_to_json ch =
            @ float_option_to_json "max" ch.max
            @ alarm_option_to_json "max" ch.alarm
            @ color_option_to_json "max" ch.color )
+
+type json = Yojson.Basic.t
 
 let channel_min_max ch min max : json =
   `Assoc [ "number", `Int ch;
