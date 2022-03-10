@@ -16,7 +16,7 @@ type mode =
   | Temp of int
   | Temps
   | Battery
-  | Max of float
+  | Range of string
 
 let _ =
   let mode = ref Settings in
@@ -27,10 +27,10 @@ let _ =
       [ ("-c", Arg.Int (fun ch -> channel := ch),     "channel select channel");
         ("-d", Arg.Unit (fun () -> mode := Data),     " get the /data");
         ("-i", Arg.Unit (fun () -> mode := Info),     " get the /info");
-        ("-M", Arg.Float (fun t -> mode := Max t),     "temperature set maximum");
+        ("-r", Arg.String (fun r -> mode := Range r), "range set temperature range");
         ("-s", Arg.Unit (fun () -> mode := Settings), " get the /settings");
         ("-t", Arg.Int (fun ch -> mode := Temp ch),   "channel get the temperature");
-        ("-T", Arg.Unit (fun () -> mode := Temps),    " get the temperatures");
+        ("-T", Arg.Unit (fun () -> mode := Temps),    " get all temperatures");
         ("-b", Arg.Unit (fun () -> mode := Battery),  " get the battery status");
         ] in
   Arg.parse options (fun s -> raise (Arg.Bad ("invalid argument: " ^ s))) usage;
@@ -44,7 +44,7 @@ let _ =
     | Temp ch -> print_temperature ch
     | Temps -> print_temperatures ()
     | Battery -> print_battery ()
-    | Max t -> set_channel_max !channel t
+    | Range r -> set_channel_range !channel r
   with
   | ThoCurl.Invalid_JSON (msg, s) ->
      Printf.printf "Invalid JSON:\n%s\n%s\n%s\n%s\n" msg separator s separator
