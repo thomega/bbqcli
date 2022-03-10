@@ -4,6 +4,11 @@ let host_default = "wlanthermo"
 
 let my_name = Sys.argv.(0)
 
+let separator = String.make 72 '='
+
+let print_json j =
+  Yojson.Basic.pretty_to_string j |> print_endline
+
 type mode =
   | Data
   | Info
@@ -31,11 +36,16 @@ let _ =
   Arg.parse options (fun s -> raise (Arg.Bad ("invalid argument: " ^ s))) usage;
   let open ThoCurl in
   let open WLANThermo in
-  match !mode with
-  | Info -> get "info" |> print_endline
-  | Data -> get "data" |> print_json
-  | Settings -> get "settings" |> print_json
-  | Temp ch -> print_temperature ch
-  | Temps -> print_temperatures ()
-  | Battery -> print_battery ()
-  | Max t -> set_channel_max !channel t
+  try
+    match !mode with
+    | Info -> get "info" |> print_endline
+    | Data -> get_json "data" |> print_json
+    | Settings -> get_json "settings" |> print_json
+    | Temp ch -> print_temperature ch
+    | Temps -> print_temperatures ()
+    | Battery -> print_battery ()
+    | Max t -> set_channel_max !channel t
+  with
+  | ThoCurl.Invalid_JSON (msg, s) ->
+     Printf.printf "Invalid JSON:\n%s\n%s\n%s\n%s\n" msg separator s separator
+

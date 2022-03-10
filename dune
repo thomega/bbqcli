@@ -18,4 +18,4 @@
   (ocamlopt_flags (:standard -inline 32))
   (wrapped false)
   (modules ThoCurl)
-  (libraries unix))
+  (libraries unix yojson))

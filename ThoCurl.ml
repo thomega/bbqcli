@@ -3,6 +3,14 @@
 let curl_path = "curl"
 let host_default = "wlanthermo"
 
+exception Invalid_JSON of string * string
+
+let string_to_json s =
+  try
+    Yojson.Basic.from_string s
+  with
+  | Yojson.Json_error msg -> raise (Invalid_JSON (msg, s))
+
 let url_of_path ?(ssl=false) ?(host=host_default) path =
   let protocol =
     if ssl then
@@ -33,6 +41,9 @@ let get ?ssl ?host path =
       [|curl_path; "-s"; "-X"; "GET"; url_of_path ?ssl ?host path|] in
   string_from_channel_and_close output
 
+let get_json ?ssl ?host path =
+  get ?ssl ?host path |> string_to_json
+
 let post_or_patch_long ?ssl ?host ~request path data =
   let output, input =
     Unix.open_process_args
@@ -54,5 +65,12 @@ let post_or_patch ?ssl ?host ~request path data =
 let post ?ssl ?host path data =
   post_or_patch ?ssl ?host ~request:"POST" path data
 
+let post_json ?ssl ?host path data =
+  post ?ssl ?host path (Yojson.Basic.to_string data) |> string_to_json
+
 let patch ?ssl ?host path data =
   post_or_patch ?ssl ?host ~request:"PATCH" path data
+
+let patch_json ?ssl ?host path data =
+  patch ?ssl ?host path (Yojson.Basic.to_string data) |> string_to_json
+
