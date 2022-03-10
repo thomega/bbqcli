@@ -17,8 +17,8 @@ let temperatures data =
       if t < 999.0 then
         { channel = channel |> member "number" |> to_int;
           t;
-          t_min =  channel |> member "min" |> to_float;
-          t_max =  channel |> member "max" |> to_float } :: acc
+          t_min = channel |> member "min" |> to_float;
+          t_max = channel |> member "max" |> to_float } :: acc
       else
         acc)
     [] channel_list
@@ -26,19 +26,19 @@ let temperatures data =
 let temperature_opt data channel =
   List.find_opt (fun t -> t.channel = channel) (temperatures data)
 
-open ThoCurl
-
 let format_temperature t =
   let value = sprintf "channel #%d: %5.1f deg" t.channel t.t
   and interval = sprintf "[%5.1f,%5.1f]" t.t_min t.t_max in
   if t.t_max < t.t_min then
-    sprintf "%s (warning: inverted %s!)" value interval
+    value ^ " ?? " ^ interval ^ " is inverted!"
   else if t.t < t.t_min then
-    sprintf "%s << %s" value interval
+    value ^ " << " ^ interval
   else if t.t > t.t_max then
-    sprintf "%s >> %s" value interval
+    value ^ " >> " ^ interval
   else
-    sprintf "%s in %s" value interval
+    value ^ " in " ^ interval
+
+open ThoCurl
 
 let print_temperature ch =
   let data = get_json "data" in
@@ -58,7 +58,7 @@ let print_battery () =
   let open Yojson.Basic.Util in
   let system = data |> member "system" in
   let percentage = system |> member "soc" |> to_int
-  and charging =  system |> member "charge" |> to_bool in
+  and charging = system |> member "charge" |> to_bool in
   printf
     "battery %3d%% %s\n"
     percentage
@@ -101,6 +101,14 @@ type channel  =
     alarm : alarm option;
     color : color option }
 
+let plain_channel ch =
+  { number = ch;
+    name = None;
+    min = None;
+    max = None;
+    alarm = None;
+    color = None }
+
 let int_to_json name n = [ name, `Int n ]
 let float_to_json name x = [ name, `Float x ]
 let string_to_json name s = [ name, `String s ]
@@ -122,23 +130,20 @@ let channel_to_json ch =
            @ string_option_to_json "name" ch.name
            @ float_option_to_json "min" ch.min
            @ float_option_to_json "max" ch.max
-           @ alarm_option_to_json "max" ch.alarm
-           @ color_option_to_json "max" ch.color )
+           @ alarm_option_to_json "alarm" ch.alarm
+           @ color_option_to_json "color" ch.color )
 
-type json = Yojson.Basic.t
+let channel_min_max ch min max =
+  let channel = plain_channel ch in
+  channel_to_json { channel with min = Some min; max = Some max }
 
-let channel_min_max ch min max : json =
-  `Assoc [ "number", `Int ch;
-           "min", `Float min;
-           "max", `Float max ]
+let channel_min ch min =
+  let channel = plain_channel ch in
+  channel_to_json { channel with min = Some min }
 
-let channel_min ch min : json =
-  `Assoc [ "number", `Int ch;
-           "min", `Float min ]
-
-let channel_max ch max : json =
-  `Assoc [ "number", `Int ch;
-           "max", `Float max ]
+let channel_max ch max =
+  let channel = plain_channel ch in
+  channel_to_json { channel with max = Some max }
 
 (* "PATCH" doesn't appear to work, but "POST" works even with
    incomplete records. *)
