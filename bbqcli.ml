@@ -79,46 +79,61 @@ let beep_alarm_arg =
   & opt (some switch) ~vopt:(Some On) None
   & info ["b"; "beep"] ~docv:docv_switch  ~doc
 
-let range ?(stride=1) n1 n2 =
-  if stride <= 0 then
-    invalid_arg "range: stride <= 0"
-  else
-    let rec range' n =
-      if n > n2 then
-        []
+module type Utils =
+  sig
+    val merge_integer_ranges : int list list -> (int * int) list list -> int list
+  end
+
+module Utils : Utils =
+  struct
+
+    let range ?(stride=1) n1 n2 =
+      if stride <= 0 then
+        invalid_arg "range: stride <= 0"
       else
-        n :: range' (n + stride) in
-    range' n1
+        let rec range' n =
+          if n > n2 then
+            []
+          else
+            n :: range' (n + stride) in
+        range' n1
 
-let rec uniq' x = function
-  | [] -> []
-  | x' :: rest ->
-      if x' = x then
-        uniq' x rest
-      else
-        x' :: uniq' x' rest
+    let rec uniq' x = function
+      | [] -> []
+      | x' :: rest ->
+         if x' = x then
+           uniq' x rest
+         else
+           x' :: uniq' x' rest
 
-let uniq = function
-  | [] -> []
-  | x :: rest -> x :: uniq' x rest
+    let uniq = function
+      | [] -> []
+      | x :: rest -> x :: uniq' x rest
 
-let compress l =
-  uniq (List.sort Stdlib.compare l)
+    let compress l =
+      uniq (List.sort Stdlib.compare l)
 
-let expand_range (i, j) =
-  range i j
+    let expand_range (i, j) =
+      range i j
 
-let expand_ranges =
-  List.map expand_range
+    let expand_ranges =
+      List.map expand_range
 
-let merge_integer_ranges integer_lists ranges =
-  compress (List.concat (integer_lists @ expand_ranges (List.concat ranges)))
+    let merge_integer_ranges integer_lists ranges =
+      compress (List.concat (integer_lists @ expand_ranges (List.concat ranges)))
 
-module Temperature =
+  end
+
+module type Unit_Cmd =
+  sig
+    val cmd : unit Cmd.t
+  end
+
+module Temperature : Unit_Cmd =
   struct
 
     let f channels ranges =
-      let all_channels = merge_integer_ranges channels ranges in
+      let all_channels = Utils.merge_integer_ranges channels ranges in
       Printf.printf
         "temperature of channel(s) %s\n"
         (String.concat
@@ -135,11 +150,11 @@ module Temperature =
 
 end
 
-module Alarm =
+module Alarm : Unit_Cmd =
   struct
 
     let f channels channel_ranges temperature_range push beep =
-      let all_channels = merge_integer_ranges channels channel_ranges in
+      let all_channels = Utils.merge_integer_ranges channels channel_ranges in
       Printf.printf
         "alarm of channel(s) %s set to range %s:%s%s\n"
         (String.concat "," (List.map string_of_int all_channels))
@@ -170,7 +185,7 @@ module Alarm =
       Cmd.v (Cmd.info "alarm" ~man) term
   end
 
-module Info =
+module Info : Unit_Cmd =
   struct
 
     let f () =
@@ -183,7 +198,7 @@ module Info =
       Cmd.v (Cmd.info "info") term
   end
 
-module Data =
+module Data : Unit_Cmd =
   struct
 
     let f () =
@@ -197,7 +212,7 @@ module Data =
 
   end
 
-module Settings =
+module Settings : Unit_Cmd =
   struct
 
     let f () =
@@ -210,7 +225,7 @@ module Settings =
       Cmd.v (Cmd.info "settings") term
   end
 
-module Battery =
+module Battery : Unit_Cmd =
   struct
 
     let f () =
@@ -229,7 +244,8 @@ let main_cmd =
       `P "Control a WLANThermo Mini V3 on the command line \
           using the HTTP API."; ] @ common_man in
   let info = Cmd.info "bbqcli" ~man in
-  Cmd.group info [Info.cmd; Data.cmd; Settings.cmd; Battery.cmd; Temperature.cmd; Alarm.cmd]
+  Cmd.group info [Alarm.cmd; Temperature.cmd; Battery.cmd;
+                  Data.cmd; Settings.cmd; Info.cmd]
 
 let () =
   exit (Cmd.eval main_cmd)
