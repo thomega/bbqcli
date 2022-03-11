@@ -53,17 +53,10 @@ let switch_to_string = function
   | On -> "on"
   | Off -> "off"
 
-let docv_switch = "on|off|+|-"
+let docv_switch = "on|+|off|-"
 
 let switch =
-  let docv = docv_switch in
-  let parse s =
-    match String.lowercase_ascii s with
-    | "on" | "+" -> Ok On
-    | "off" | "-" -> Ok Off
-    | _ -> Error (`Msg ("invalid argument: " ^ s ^ " (one of {" ^ docv ^ "} or empty)"))
-  and print ppf p = Format.fprintf ppf "%s" (switch_to_string p) in
-  Arg.conv ~docv (parse, print)
+  Arg.enum [("+", On); ("on", On); ("-", Off); ("off", Off)]
 
 let push_alarm_arg =
   let doc = "Switch the push alarm on/off." in
