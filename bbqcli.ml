@@ -114,93 +114,114 @@ let expand_ranges =
 let merge_integer_ranges integer_lists ranges =
   compress (List.concat (integer_lists @ expand_ranges (List.concat ranges)))
 
-let temperature channels ranges =
-  let all_channels = merge_integer_ranges channels ranges in
-  Printf.printf
-    "temperature of channel(s) %s\n"
-    (String.concat
-       "," (List.map string_of_int all_channels));
-  match all_channels with
-  | [] -> WLANThermo.print_temperatures ()
-  | ch_list -> List.iter WLANThermo.print_temperature ch_list
+module Temperature =
+  struct
 
-let temperature_term =
-  Term.(const temperature $ channels_arg $ channel_ranges_arg)
+    let f channels ranges =
+      let all_channels = merge_integer_ranges channels ranges in
+      Printf.printf
+        "temperature of channel(s) %s\n"
+        (String.concat
+           "," (List.map string_of_int all_channels));
+      match all_channels with
+      | [] -> WLANThermo.print_temperatures ()
+      | ch_list -> List.iter WLANThermo.print_temperature ch_list
 
-let temperature_cmd =
-  Cmd.v (Cmd.info "temperature") temperature_term
+    let term =
+      Term.(const f $ channels_arg $ channel_ranges_arg)
 
-let alarm channels channel_ranges temperature_range push beep =
-  let all_channels = merge_integer_ranges channels channel_ranges in
-  Printf.printf
-    "alarm of channel(s) %s set to range %s:%s%s\n"
-    (String.concat "," (List.map string_of_int all_channels))
-    (match temperature_range with
-     | None -> "?"
-     | Some (t1, t2) -> "[" ^ string_of_float t1 ^ "," ^ string_of_float t2 ^ "]")
-    (match push with
-     | None -> ""
-     | Some s -> " " ^ switch_to_string s ^ "(push)")
-    (match beep with
-     | None -> ""
-     | Some s -> " " ^ switch_to_string s ^ "(beep)")
+    let cmd =
+      Cmd.v (Cmd.info "temperature") term
 
-let alarm_term =
-  let open Term in
-  const alarm
-  $ channels_arg
-  $ channel_ranges_arg
-  $ temperature_range_arg
-  $ push_alarm_arg
-  $ beep_alarm_arg
+end
 
-let alarm_cmd =
-  let man = [
-      `S Manpage.s_description;
-      `P "Change the temperature limits and associated alarms \
-          on a WLANThermo Mini V3 using the HTTP API." ] @ common_man in
-  Cmd.v (Cmd.info "alarm" ~man) alarm_term
+module Alarm =
+  struct
 
+    let f channels channel_ranges temperature_range push beep =
+      let all_channels = merge_integer_ranges channels channel_ranges in
+      Printf.printf
+        "alarm of channel(s) %s set to range %s:%s%s\n"
+        (String.concat "," (List.map string_of_int all_channels))
+        (match temperature_range with
+         | None -> "?"
+         | Some (t1, t2) -> "[" ^ string_of_float t1 ^ "," ^ string_of_float t2 ^ "]")
+        (match push with
+         | None -> ""
+         | Some s -> " " ^ switch_to_string s ^ "(push)")
+        (match beep with
+         | None -> ""
+         | Some s -> " " ^ switch_to_string s ^ "(beep)")
 
-let get_info () =
-  ThoCurl.get "info" |> print_endline
+    let term =
+      let open Term in
+      const f
+      $ channels_arg
+      $ channel_ranges_arg
+      $ temperature_range_arg
+      $ push_alarm_arg
+      $ beep_alarm_arg
 
-let info_term =
-  Term.(const get_info $ const ())
+    let cmd =
+      let man = [
+          `S Manpage.s_description;
+          `P "Change the temperature limits and associated alarms \
+              on a WLANThermo Mini V3 using the HTTP API." ] @ common_man in
+      Cmd.v (Cmd.info "alarm" ~man) term
+  end
 
-let info_cmd =
-  Cmd.v (Cmd.info "info") info_term
+module Info =
+  struct
 
+    let f () =
+      ThoCurl.get "info" |> print_endline
 
-let data () =
-  ThoCurl.get_json "data" |> print_json
+    let term =
+      Term.(const f $ const ())
 
-let data_term =
-  Term.(const data $ const ())
+    let cmd =
+      Cmd.v (Cmd.info "info") term
+  end
 
-let data_cmd =
-  Cmd.v (Cmd.info "data") data_term
+module Data =
+  struct
 
+    let f () =
+      ThoCurl.get_json "data" |> print_json
 
-let settings () =
-  ThoCurl.get_json "settings" |> print_json
+    let term =
+      Term.(const f $ const ())
 
-let settings_term =
-  Term.(const settings $ const ())
+    let cmd =
+      Cmd.v (Cmd.info "data") term
 
-let settings_cmd =
-  Cmd.v (Cmd.info "settings") settings_term
+  end
 
+module Settings =
+  struct
 
-let battery () =
-  WLANThermo.print_battery ()
+    let f () =
+      ThoCurl.get_json "settings" |> print_json
 
-let battery_term =
-  Term.(const battery $ const ())
+    let term =
+      Term.(const f $ const ())
 
-let battery_cmd =
-  Cmd.v (Cmd.info "battery") battery_term
+    let cmd =
+      Cmd.v (Cmd.info "settings") term
+  end
 
+module Battery =
+  struct
+
+    let f () =
+      WLANThermo.print_battery ()
+
+    let term =
+      Term.(const f $ const ())
+
+    let cmd =
+      Cmd.v (Cmd.info "battery") term
+  end
 
 let main_cmd =
   let man = [
@@ -208,7 +229,7 @@ let main_cmd =
       `P "Control a WLANThermo Mini V3 on the command line \
           using the HTTP API."; ] @ common_man in
   let info = Cmd.info "bbqcli" ~man in
-  Cmd.group info [info_cmd; data_cmd; settings_cmd; battery_cmd; temperature_cmd; alarm_cmd]
+  Cmd.group info [Info.cmd; Data.cmd; Settings.cmd; Battery.cmd; Temperature.cmd; Alarm.cmd]
 
 let () =
   exit (Cmd.eval main_cmd)
