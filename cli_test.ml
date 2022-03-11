@@ -6,7 +6,7 @@ let channels_arg =
   let open Arg in
   value
   & opt_all (list int) []
-  & info ["c"; "channel"] ~docv:"N[,M...]" ~doc
+  & info ["c"; "channel"; "ch"] ~docv:"N[,M...]" ~doc
 
 (* (int * int) list list *)
 let channel_ranges_arg =
@@ -14,7 +14,7 @@ let channel_ranges_arg =
   let open Arg in
   value
   & opt_all (list (pair ~sep:'-' int int)) []
-  & info ["r"; "range"] ~docv:"FROM-TO" ~doc
+  & info ["C"; "channels"] ~docv:"FROM-TO" ~doc
 
 (* (float * float) option *)
 let temperature_range_arg =
@@ -22,7 +22,38 @@ let temperature_range_arg =
   let open Arg in
   value
   & opt (some (pair ~sep:'-' float float)) None
-  & info ["t"; "temperature"] ~docv:"FROM-TO" ~doc
+  & info ["t"; "temperature"; "temp"] ~docv:"FROM-TO" ~doc
+
+type switch = On | Off
+let switch_to_string = function
+  | On -> "on"
+  | Off -> "off"
+
+let docv_switch = "on|off|+|-"
+
+let switch =
+  let docv = docv_switch in
+  let parse s =
+    match String.lowercase_ascii s with
+    | "on" | "+" -> Ok On
+    | "off" | "-" -> Ok Off
+    | _ -> Error (`Msg ("invalid argument: " ^ s ^ " (one of {" ^ docv ^ "} or empty)"))
+  and print ppf p = Format.fprintf ppf "%s" (switch_to_string p) in
+  Arg.conv ~docv (parse, print)
+
+let push_alarm_arg =
+  let doc = "Switch the push alarm on/off." in
+  let open Arg in
+  value
+  & opt (some switch) ~vopt:(Some On) None
+  & info ["p"; "push"] ~docv:docv_switch ~doc
+
+let beep_alarm_arg =
+  let doc = "Switch the beep alarm on/off." in
+  let open Arg in
+  value
+  & opt (some switch) ~vopt:(Some On) None
+  & info ["b"; "beep"] ~docv:docv_switch  ~doc
 
 let range ?(stride=1) n1 n2 =
   if stride <= 0 then
@@ -72,18 +103,20 @@ let temperature_term =
 let temperature_cmd =
   Cmd.v (Cmd.info "temperature") temperature_term
 
-type 'a switch =
-  | On of 'a
-  | Off of 'a
-
-let alarm channels channel_ranges temperature_range =
+let alarm channels channel_ranges temperature_range push beep =
   let all_channels = merge_integer_ranges channels channel_ranges in
   Printf.printf
-    "alarm of channel(s) %s set to range %s\n"
+    "alarm of channel(s) %s set to range %s:%s%s\n"
     (String.concat "," (List.map string_of_int all_channels))
     (match temperature_range with
      | None -> "?"
      | Some (t1, t2) -> "[" ^ string_of_float t1 ^ "," ^ string_of_float t2 ^ "]")
+    (match push with
+     | None -> ""
+     | Some s -> " " ^ switch_to_string s ^ "(push)")
+    (match beep with
+     | None -> ""
+     | Some s -> " " ^ switch_to_string s ^ "(beep)")
 
 let alarm_term =
   let open Term in
@@ -91,6 +124,8 @@ let alarm_term =
   $ channels_arg
   $ channel_ranges_arg
   $ temperature_range_arg
+  $ push_alarm_arg
+  $ beep_alarm_arg
 
 let alarm_cmd =
   Cmd.v (Cmd.info "alarm") alarm_term
