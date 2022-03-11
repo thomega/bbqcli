@@ -4,3 +4,10 @@
   (flags (:standard -w -K))
   (ocamlopt_flags (:standard -inline 32))
   (libraries unix yojson))
+
+(executable
+  (name cli_test)
+  (modules cli_test)
+  (flags (:standard -w -K))
+  (ocamlopt_flags (:standard -inline 32))
+  (libraries cmdliner))
