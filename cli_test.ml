@@ -1,5 +1,13 @@
 open Cmdliner
 
+let common_man =
+  [ `S Manpage.s_files;
+    `P "tba.";
+    `S Manpage.s_authors;
+    `P "Thorsten Ohl <ohl@physik.uni-wuerzburg.de>.";
+    `S Manpage.s_bugs;
+    `P "Report bugs to <ohl@physik.uni-wuerzburg.de>." ]
+
 (* int list list *)
 let channels_arg =
   let doc = "Select the channel(s) $(docv) (can be repeated)." in
@@ -128,7 +136,11 @@ let alarm_term =
   $ beep_alarm_arg
 
 let alarm_cmd =
-  Cmd.v (Cmd.info "alarm") alarm_term
+  let man = [
+      `S Manpage.s_description;
+      `P "Change the temperature limits and associated alarms \
+          on a WLANThermo Mini V3 using the HTTP API." ] @ common_man in
+  Cmd.v (Cmd.info "alarm" ~man) alarm_term
 
 
 let get_info () =
@@ -162,7 +174,11 @@ let battery_cmd =
 
 
 let main_cmd =
-  let info = Cmd.info "bbqcli" in
+  let man = [
+      `S Manpage.s_description;
+      `P "Control a WLANThermo Mini V3 on the command line \
+          using the HTTP API."; ] @ common_man in
+  let info = Cmd.info "bbqcli" ~man in
   Cmd.group info [info_cmd; data_cmd; battery_cmd; temperature_cmd; alarm_cmd]
 
 let () =

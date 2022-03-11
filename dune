@@ -3,7 +3,7 @@
   (modules bbqcli WLANThermo ThoCurl)
   (flags (:standard -w -K))
   (ocamlopt_flags (:standard -inline 32))
-  (libraries unix yojson))
+  (libraries unix yojson cmdliner))
 
 (executable
   (name cli_test)
