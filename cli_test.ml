@@ -86,7 +86,11 @@ let alarm channels channel_ranges temperature_range =
      | Some (t1, t2) -> "[" ^ string_of_float t1 ^ "," ^ string_of_float t2 ^ "]")
 
 let alarm_term =
-  Term.(const alarm $ channels_arg $ channel_ranges_arg $ temperature_range_arg)
+  let open Term in
+  const alarm
+  $ channels_arg
+  $ channel_ranges_arg
+  $ temperature_range_arg
 
 let alarm_cmd =
   Cmd.v (Cmd.info "alarm") alarm_term
