@@ -16,7 +16,7 @@ let print_json j =
 
 open Cmdliner
 
-let common_man =
+let man_footer =
   [ `S Manpage.s_files;
     `P "tba.";
     `S Manpage.s_authors;
@@ -40,37 +40,18 @@ let channel_ranges_arg =
   & opt_all (list (pair ~sep:'-' int int)) []
   & info ["C"; "channels"] ~docv:"FROM-TO" ~doc
 
-(* (float * float) option *)
-let temperature_range_arg =
-  let doc = "Select the temperature range $(docv)." in
-  let open Arg in
-  value
-  & opt (some (pair ~sep:'-' float float)) None
-  & info ["t"; "temperature"; "temp"] ~docv:"FROM-TO" ~doc
-
 type switch = On | Off
+
 let switch_to_string = function
   | On -> "on"
   | Off -> "off"
 
-let docv_switch = "on|+|off|-"
+(* Put the long form of equivalent options last so that they are
+   used for the description of the default in the manpage. *)
+let switch = Arg.enum [("+", On); ("on", On); ("-", Off); ("off", Off)]
 
-let switch =
-  Arg.enum [("+", On); ("on", On); ("-", Off); ("off", Off)]
+let switch_docv = "on|+|off|-"
 
-let push_alarm_arg =
-  let doc = "Switch the push alarm on/off." in
-  let open Arg in
-  value
-  & opt (some switch) ~vopt:(Some On) None
-  & info ["p"; "push"] ~docv:docv_switch ~doc
-
-let beep_alarm_arg =
-  let doc = "Switch the beep alarm on/off." in
-  let open Arg in
-  value
-  & opt (some switch) ~vopt:(Some On) None
-  & info ["b"; "beep"] ~docv:docv_switch  ~doc
 
 module type Utils =
   sig
@@ -80,6 +61,7 @@ module type Utils =
 module Utils : Utils =
   struct
 
+    (* From ThoList: *)
     let range ?(stride=1) n1 n2 =
       if stride <= 0 then
         invalid_arg "range: stride <= 0"
@@ -91,6 +73,7 @@ module Utils : Utils =
             n :: range' (n + stride) in
         range' n1
 
+    (* From ThoList: *)
     let rec uniq' x = function
       | [] -> []
       | x' :: rest ->
@@ -103,6 +86,8 @@ module Utils : Utils =
       | [] -> []
       | x :: rest -> x :: uniq' x rest
 
+    (* Asympototically inefficient, but we're dealing with short
+       lists here. *)
     let compress l =
       uniq (List.sort Stdlib.compare l)
 
@@ -116,6 +101,7 @@ module Utils : Utils =
       compress (List.concat (integer_lists @ expand_ranges (List.concat ranges)))
 
   end
+
 
 module type Unit_Cmd =
   sig
@@ -143,6 +129,7 @@ module Temperature : Unit_Cmd =
 
 end
 
+
 module Alarm : Unit_Cmd =
   struct
 
@@ -161,6 +148,28 @@ module Alarm : Unit_Cmd =
          | None -> ""
          | Some s -> " " ^ switch_to_string s ^ "(beep)")
 
+    (* (float * float) option *)
+    let temperature_range_arg =
+      let doc = "Select the temperature range $(docv)." in
+      let open Arg in
+      value
+      & opt (some (pair ~sep:'-' float float)) None
+      & info ["t"; "temperature"; "temp"] ~docv:"FROM-TO" ~doc
+
+    let push_alarm_arg =
+      let doc = "Switch the push alarm on/off." in
+      let open Arg in
+      value
+      & opt (some switch) ~vopt:(Some On) None
+      & info ["p"; "push"] ~docv:switch_docv ~doc
+
+    let beep_alarm_arg =
+      let doc = "Switch the beep alarm on/off." in
+      let open Arg in
+      value
+      & opt (some switch) ~vopt:(Some On) None
+      & info ["b"; "beep"] ~docv:switch_docv  ~doc
+
     let term =
       let open Term in
       const f
@@ -174,9 +183,10 @@ module Alarm : Unit_Cmd =
       let man = [
           `S Manpage.s_description;
           `P "Change the temperature limits and associated alarms \
-              on a WLANThermo Mini V3 using the HTTP API." ] @ common_man in
+              on a WLANThermo Mini V3 using the HTTP API." ] @ man_footer in
       Cmd.v (Cmd.info "alarm" ~man) term
   end
+
 
 module Info : Unit_Cmd =
   struct
@@ -189,7 +199,9 @@ module Info : Unit_Cmd =
 
     let cmd =
       Cmd.v (Cmd.info "info") term
+
   end
+
 
 module Data : Unit_Cmd =
   struct
@@ -205,6 +217,7 @@ module Data : Unit_Cmd =
 
   end
 
+
 module Settings : Unit_Cmd =
   struct
 
@@ -217,6 +230,7 @@ module Settings : Unit_Cmd =
     let cmd =
       Cmd.v (Cmd.info "settings") term
   end
+
 
 module Battery : Unit_Cmd =
   struct
@@ -231,11 +245,12 @@ module Battery : Unit_Cmd =
       Cmd.v (Cmd.info "battery") term
   end
 
+
 let main_cmd =
   let man = [
       `S Manpage.s_description;
       `P "Control a WLANThermo Mini V3 on the command line \
-          using the HTTP API."; ] @ common_man in
+          using the HTTP API."; ] @ man_footer in
   let info = Cmd.info "bbqcli" ~man in
   Cmd.group info [Alarm.cmd; Temperature.cmd; Battery.cmd;
                   Data.cmd; Settings.cmd; Info.cmd]
