@@ -1,12 +1,13 @@
 # Makefile -- dispatching to dune ...
 
-SAMPLE = ./_build/default/wlanthermo.exe
+SAMPLE = ./bbqcli.exe
+SAMPLE = ./cli_test.exe
 
 all:
 	dune build
 
 run:	all
-	$(SAMPLE)
+	dune exec -- $(SAMPLE)
 
 test:
 	dune runtest
