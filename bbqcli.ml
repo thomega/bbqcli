@@ -131,18 +131,25 @@ module type Unit_Cmd =
 module Temperature : Unit_Cmd =
   struct
 
-    let f channels ranges =
-      let all_channels = Utils.merge_integer_ranges channels ranges in
+    let print_temperatures ssl host channels =
       Printf.printf
         "temperature of channel(s) %s\n"
-        (String.concat
-           "," (List.map string_of_int all_channels));
-      match all_channels with
-      | [] -> WLANThermo.print_temperatures ()
-      | ch_list -> List.iter WLANThermo.print_temperature ch_list
+        (String.concat "," (List.map string_of_int channels));
+      match channels with
+      | [] -> WLANThermo.print_temperatures ~ssl ~host ()
+      | ch_list -> List.iter (WLANThermo.print_temperature ~ssl ~host) ch_list
 
     let term =
-      Term.(const f $ channels_arg $ channel_ranges_arg)
+      let open Term in
+      const
+        (fun ssl host channels channel_ranges ->
+          print_temperatures
+            ssl host
+            (Utils.merge_integer_ranges channels channel_ranges))
+      $ ssl_arg
+      $ host_arg
+      $ channels_arg
+      $ channel_ranges_arg
 
     let cmd =
       Cmd.v (Cmd.info "temperature") term

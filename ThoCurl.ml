@@ -1,7 +1,6 @@
 (* ThoCurl.ml -- simple interface to curl(1) *)
 
 let curl_path = "curl"
-let host_default = "wlanthermo"
 
 exception Invalid_JSON of string * string
 
@@ -11,7 +10,7 @@ let string_to_json s =
   with
   | Yojson.Json_error msg -> raise (Invalid_JSON (msg, s))
 
-let url_of_path ?(ssl=false) ?(host=host_default) path =
+let url_of_path ?(ssl=false) ~host path =
   let protocol =
     if ssl then
       "https"
@@ -34,43 +33,43 @@ let string_from_channel_and_close ic =
   close_in ic;
   s
 
-let get ?ssl ?host path =
+let get ?ssl ~host path =
   let output =
     Unix.open_process_args_in
       curl_path
-      [|curl_path; "-s"; "-X"; "GET"; url_of_path ?ssl ?host path|] in
+      [|curl_path; "-s"; "-X"; "GET"; url_of_path ?ssl ~host path|] in
   string_from_channel_and_close output
 
-let get_json ?ssl ?host path =
-  get ?ssl ?host path |> string_to_json
+let get_json ?ssl ~host path =
+  get ?ssl ~host path |> string_to_json
 
-let post_or_patch_long ?ssl ?host ~request path data =
+let post_or_patch_long ?ssl ~host ~request path data =
   let output, input =
     Unix.open_process_args
       curl_path
-      [|curl_path; "-s"; "-X"; request; url_of_path ?ssl ?host path;
+      [|curl_path; "-s"; "-X"; request; url_of_path ?ssl ~host path;
         "-H"; "Content-Type: application/json"; "-d"; "@-"|] in
   output_string input data;
   close_out input;
   string_from_channel_and_close output
 
-let post_or_patch ?ssl ?host ~request path data =
+let post_or_patch ?ssl ~host ~request path data =
   let output =
     Unix.open_process_args_in
       curl_path
-      [|curl_path; "-s"; "-X"; request; url_of_path ?ssl ?host path;
+      [|curl_path; "-s"; "-X"; request; url_of_path ?ssl ~host path;
         "-H"; "Content-Type: application/json"; "-d"; data|] in
   string_from_channel_and_close output
 
-let post ?ssl ?host path data =
-  post_or_patch ?ssl ?host ~request:"POST" path data
+let post ?ssl ~host path data =
+  post_or_patch ?ssl ~host ~request:"POST" path data
 
-let post_json ?ssl ?host path data =
-  post ?ssl ?host path (Yojson.Basic.to_string data) |> string_to_json
+let post_json ?ssl ~host path data =
+  post ?ssl ~host path (Yojson.Basic.to_string data) |> string_to_json
 
-let patch ?ssl ?host path data =
-  post_or_patch ?ssl ?host ~request:"PATCH" path data
+let patch ?ssl ~host path data =
+  post_or_patch ?ssl ~host ~request:"PATCH" path data
 
-let patch_json ?ssl ?host path data =
-  patch ?ssl ?host path (Yojson.Basic.to_string data) |> string_to_json
+let patch_json ?ssl ~host path data =
+  patch ?ssl ~host path (Yojson.Basic.to_string data) |> string_to_json
 
