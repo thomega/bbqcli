@@ -18,7 +18,7 @@ open Cmdliner
 
 let man_footer =
   [ `S Manpage.s_files;
-    `P "tba.";
+    `P "None, so far.";
     `S Manpage.s_authors;
     `P "Thorsten Ohl <ohl@physik.uni-wuerzburg.de>.";
     `S Manpage.s_bugs;
@@ -153,11 +153,11 @@ end
 module Alarm : Unit_Cmd =
   struct
 
-    let f channels channel_ranges temperature_range push beep =
-      let all_channels = Utils.merge_integer_ranges channels channel_ranges in
+    let set_alarms ssl host channels temperature_range push beep =
       Printf.printf
-        "alarm of channel(s) %s set to range %s:%s%s\n"
-        (String.concat "," (List.map string_of_int all_channels))
+        "alarm of channel(s) %s on %s://%s set to range %s:%s%s\n"
+        (String.concat "," (List.map string_of_int channels))
+        (if ssl then "https" else "http") host
         (match temperature_range with
          | None -> "?"
          | Some (t1, t2) -> "[" ^ string_of_float t1 ^ "," ^ string_of_float t2 ^ "]")
@@ -192,7 +192,14 @@ module Alarm : Unit_Cmd =
 
     let term =
       let open Term in
-      const f
+      const
+        (fun ssl host channels channel_ranges temperature_range push beep ->
+          set_alarms
+            ssl host
+            (Utils.merge_integer_ranges channels channel_ranges)
+            temperature_range push beep)
+      $ ssl_arg
+      $ host_arg
       $ channels_arg
       $ channel_ranges_arg
       $ temperature_range_arg
@@ -205,17 +212,20 @@ module Alarm : Unit_Cmd =
           `P "Change the temperature limits and associated alarms \
               on a WLANThermo Mini V3 using the HTTP API." ] @ man_footer in
       Cmd.v (Cmd.info "alarm" ~man) term
+
   end
 
 
 module Info : Unit_Cmd =
   struct
 
-    let f () =
-      ThoCurl.get "info" |> print_endline
-
     let term =
-      Term.(const f $ const ())
+      let open Term in
+      const
+        (fun ssl host ->
+          ThoCurl.get ~ssl ~host "info" |> print_endline)
+      $ ssl_arg
+      $ host_arg
 
     let cmd =
       Cmd.v (Cmd.info "info") term
@@ -226,11 +236,13 @@ module Info : Unit_Cmd =
 module Data : Unit_Cmd =
   struct
 
-    let f () =
-      ThoCurl.get_json "data" |> print_json
-
     let term =
-      Term.(const f $ const ())
+      let open Term in
+      const
+        (fun ssl host ->
+          ThoCurl.get_json ~ssl ~host "data" |> print_json)
+      $ ssl_arg
+      $ host_arg
 
     let cmd =
       Cmd.v (Cmd.info "data") term
@@ -241,11 +253,13 @@ module Data : Unit_Cmd =
 module Settings : Unit_Cmd =
   struct
 
-    let f () =
-      ThoCurl.get_json "settings" |> print_json
-
     let term =
-      Term.(const f $ const ())
+      let open Term in
+      const
+        (fun ssl host ->
+          ThoCurl.get_json ~ssl ~host "settings" |> print_json)
+      $ ssl_arg
+      $ host_arg
 
     let cmd =
       Cmd.v (Cmd.info "settings") term
@@ -255,14 +269,17 @@ module Settings : Unit_Cmd =
 module Battery : Unit_Cmd =
   struct
 
-    let f ssl host =
-      WLANThermo.print_battery ~ssl ~host ()
-
     let term =
-      Term.(const f $ ssl_arg $ host_arg)
+      let open Term in
+      const
+        (fun ssl host ->
+          WLANThermo.print_battery ~ssl ~host ())
+      $ ssl_arg
+      $ host_arg
 
     let cmd =
       Cmd.v (Cmd.info "battery") term
+
   end
 
 

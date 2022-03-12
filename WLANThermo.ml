@@ -42,15 +42,15 @@ let format_temperature t =
 
 open ThoCurl
 
-let print_temperature ch =
-  let data = get_json "data" in
+let print_temperature ?ssl ?host ch =
+  let data = get_json ?ssl ?host "data" in
   begin match temperature_opt data ch with
   | None -> printf "channel #%d: disconnected\n" ch
   | Some t -> format_temperature t |> print_endline
   end
 
-let print_temperatures () =
-  let data = get_json "data" in
+let print_temperatures ?ssl ?host () =
+  let data = get_json ?ssl ?host "data" in
   List.iter
     (fun t -> format_temperature t |> print_endline)
     (List.sort (fun t1 t2 -> compare t1.channel t2.channel) (temperatures data))
@@ -150,7 +150,7 @@ let channel_max ch max =
 (* "PATCH" doesn't appear to work, but "POST" works even with
    incomplete records. *)
 
-let set_channel_range ch range =
+let set_channel_range ?ssl ?host ch range =
   let command =
     begin match String.split_on_char '-' range with
     | [""; ""] -> invalid_arg ("set_channel_range: " ^ range)
@@ -160,7 +160,7 @@ let set_channel_range ch range =
     | _ -> invalid_arg ("set_channel_range: " ^ range)
     end in
   let open Yojson.Basic.Util in
-  match post_json "setchannels" command with
+  match post_json ?ssl ?host "setchannels" command with
   | `Bool true -> ()
   | `Bool false -> failwith "response: false"
   | response ->
