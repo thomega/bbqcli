@@ -5,6 +5,6 @@
  *)
 val print_temperature : int -> unit
 val print_temperatures : unit -> unit
-val print_battery : unit -> unit
+val print_battery : ?ssl:bool -> ?host:string -> unit -> unit
 
 val set_channel_range : int -> string -> unit

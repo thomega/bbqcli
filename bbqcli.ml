@@ -24,6 +24,26 @@ let man_footer =
     `S Manpage.s_bugs;
     `P "Report bugs to <ohl@physik.uni-wuerzburg.de>." ]
 
+let ssl_arg =
+  let doc = "Use SSL to connect to the host." in
+  let env = Cmd.Env.info "WLANTHERMO_SSL" in
+  let open Arg in
+  value
+  & opt bool ~vopt:true false
+  & info ["s"; "ssl"] ~docv:"true/false" ~doc ~env
+
+let host_arg =
+  let doc = "Connect to the host $(docv)." in
+  let env = Cmd.Env.info "WLANTHERMO_HOST" in
+  let open Arg in
+  value
+  & opt string host_default
+  & info ["H"; "host"] ~docv:"HOST" ~doc ~env
+
+let envs =
+  [ Cmd.Env.info "WLANTHERMO_HOST" ~doc:"Overrides the default hostname.";
+    Cmd.Env.info "WLANTHERMO_SSL" ~doc:"If set, use https instead of htpp." ]
+
 (* int list list *)
 let channels_arg =
   let doc = "Select the channel(s) $(docv) (can be repeated)." in
@@ -235,11 +255,11 @@ module Settings : Unit_Cmd =
 module Battery : Unit_Cmd =
   struct
 
-    let f () =
-      WLANThermo.print_battery ()
+    let f ssl host =
+      WLANThermo.print_battery ~ssl ~host ()
 
     let term =
-      Term.(const f $ const ())
+      Term.(const f $ ssl_arg $ host_arg)
 
     let cmd =
       Cmd.v (Cmd.info "battery") term
@@ -247,11 +267,14 @@ module Battery : Unit_Cmd =
 
 
 let main_cmd =
+  let open Manpage in
   let man = [
-      `S Manpage.s_description;
+      `S s_description;
       `P "Control a WLANThermo Mini V3 on the command line \
-          using the HTTP API."; ] @ man_footer in
-  let info = Cmd.info "bbqcli" ~man in
+          using the HTTP API.";
+      `S s_examples;
+      `Pre "bbqcli -c 9 -r 80-110 -p on"] @ man_footer in
+  let info = Cmd.info "bbqcli" ~man ~envs in
   Cmd.group info [Alarm.cmd; Temperature.cmd; Battery.cmd;
                   Data.cmd; Settings.cmd; Info.cmd]
 

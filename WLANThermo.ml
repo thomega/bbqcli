@@ -1,5 +1,7 @@
 (* WLANThermo.ml -- WLANThermo API *)
 
+let host_default = "wlanthermo"
+
 open Printf
 
 type temperature =
@@ -53,8 +55,8 @@ let print_temperatures () =
     (fun t -> format_temperature t |> print_endline)
     (List.sort (fun t1 t2 -> compare t1.channel t2.channel) (temperatures data))
 
-let print_battery () =
-  let data = get_json "data" in
+let print_battery ?ssl ?host () =
+  let data = get_json ?ssl ?host "data" in
   let open Yojson.Basic.Util in
   let system = data |> member "system" in
   let percentage = system |> member "soc" |> to_int
