@@ -148,15 +148,8 @@ let channel_max ch max =
 (* "PATCH" doesn't appear to work, but "POST" works even with
    incomplete records. *)
 
-let set_channel_range ?ssl ~host ch range =
-  let command =
-    begin match String.split_on_char '-' range with
-    | [""; ""] -> invalid_arg ("set_channel_range: " ^ range)
-    | [min; ""] -> channel_min ch (float_of_string min)
-    | [""; max] -> channel_max ch (float_of_string max)
-    | [min; max] -> channel_min_max ch (float_of_string min) (float_of_string max)
-    | _ -> invalid_arg ("set_channel_range: " ^ range)
-    end in
+let set_channel_range ?ssl ~host ch (min, max) =
+  let command = channel_min_max ch min max in
   let open Yojson.Basic.Util in
   match post_json ?ssl ~host "setchannels" command with
   | `Bool true -> ()

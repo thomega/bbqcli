@@ -7,4 +7,4 @@ val print_temperature : ?ssl:bool -> host:string -> int -> unit
 val print_temperatures : ?ssl:bool -> host:string -> unit -> unit
 val print_battery : ?ssl:bool -> host:string -> unit -> unit
 
-val set_channel_range : ?ssl:bool -> host:string -> int -> string -> unit
+val set_channel_range : ?ssl:bool -> host:string -> int -> (float * float) -> unit

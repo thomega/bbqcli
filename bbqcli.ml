@@ -173,7 +173,13 @@ module Alarm : Unit_Cmd =
          | Some s -> " " ^ switch_to_string s ^ "(push)")
         (match beep with
          | None -> ""
-         | Some s -> " " ^ switch_to_string s ^ "(beep)")
+         | Some s -> " " ^ switch_to_string s ^ "(beep)");
+      (match temperature_range with
+       | None -> ()
+       | Some r ->
+          List.iter
+            (fun ch -> WLANThermo.set_channel_range ~ssl ~host ch r)
+            channels)
 
     (* (float * float) option *)
     let temperature_range_arg =
