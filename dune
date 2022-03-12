@@ -4,3 +4,10 @@
   (flags (:standard -w -K))
   (ocamlopt_flags (:standard -inline 32))
   (libraries unix yojson cmdliner))
+
+(executable
+  (name curltest)
+  (modules curltest)
+  (flags (:standard -w -K))
+  (ocamlopt_flags (:standard -inline 32))
+  (libraries curl yojson))
