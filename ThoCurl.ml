@@ -29,6 +29,7 @@ let get ?ssl ~host path =
       Curl.set_errorbuffer connection errorBuffer;
       Curl.set_writefunction connection (fill_buffer result);
       Curl.set_url connection (url_of_path ?ssl ~host path);
+      Curl.set_timeout connection 10;
       Curl.perform connection;
       Curl.cleanup connection
     with
@@ -56,6 +57,7 @@ let post ?ssl ~host path data =
       Curl.set_httpheader connection [ "Content-Type: application/json" ];
       Curl.set_postfields connection data;
       Curl.set_url connection (url_of_path ?ssl ~host path);
+      Curl.set_timeout connection 10;
       Curl.perform connection;
       Curl.cleanup connection;
     with
