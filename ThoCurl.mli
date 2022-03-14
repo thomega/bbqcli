@@ -1,7 +1,10 @@
 (* ThoCurl.ml -- simple interface to curl(1) *)
 
+type content =
+  | JSON
+
 val get : ?ssl:bool -> host:string -> string -> string
-val post : ?ssl:bool -> host:string -> string -> string -> string
+val post : ?ssl:bool -> host:string -> string -> ?content:content -> string -> string
 (* val patch : ?ssl:bool -> host:string -> string -> string -> string *)
 
 exception Invalid_JSON of string * string
