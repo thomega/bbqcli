@@ -56,6 +56,10 @@ module Color =
         (clamp_channel c.red)
         (clamp_channel c.green)
         (clamp_channel c.blue)
+
+    let of_string s =
+      Scanf.sscanf s "#%02X%02X%02X" (fun red green blue -> { red; green; blue })
+
   end
 
 type temperature =
@@ -119,6 +123,42 @@ let print_battery ?ssl ~host () =
     "battery %3d%% %s\n"
     percentage
     (if charging then "(charging)" else "(not charging)")
+
+module Channel =
+  struct
+
+    type t =
+      { channel : int;
+        name : string;
+        typ: int;
+        t : float option;
+        t_min : float;
+        t_max : float;
+        alarm : Alarm.t;
+        color : Color.t;
+        fixed : bool;
+        connected : bool }
+
+    let of_json ch =
+      let open Yojson.Basic.Util in
+      let t =
+        let temp = ch |> member "temp" |> to_float in
+        if temp < 999.0 then
+          Some temp
+        else
+          None in
+      { channel = ch |> member "number" |> to_int;
+        name =  ch |> member "name" |> to_string;
+        typ = ch |> member "typ" |> to_int;
+        t;
+        t_min = ch |> member "min" |> to_float;
+        t_max = ch |> member "max" |> to_float;
+        alarm = ch |> member "alarm" |> to_int |> Alarm.of_int;
+        color = ch |> member "color" |> to_string |> Color.of_string;
+        fixed = ch |> member "fixed" |> to_bool;
+        connected = ch |> member "connected" |> to_bool }
+
+  end
 
 module Channel_Mod =
   struct
