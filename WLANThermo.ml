@@ -2,6 +2,62 @@
 
 open Printf
 
+module Alarm =
+  struct
+
+    (* We could just as well have used bitarithmetic. *)
+
+    type t =
+      { push : bool;
+        buzzer : bool }
+
+    let to_int = function
+      | { push = false; buzzer = false } -> 0
+      | { push = true; buzzer = false } -> 1
+      | { push = false; buzzer = true } -> 2
+      | { push = true; buzzer = true } -> 3
+
+    let format = function
+      | { push = false; buzzer = false } -> "off"
+      | { push = true; buzzer = false } -> "push"
+      | { push = false; buzzer = true } -> "buzzer"
+      | { push = true; buzzer = true } -> "push and buzzer"
+
+    let of_int = function
+      | 0 -> { push = false; buzzer = false }
+      | 1 -> { push = true; buzzer = false }
+      | 2 -> { push = false; buzzer = true }
+      | 3 -> { push = true; buzzer = true }
+      | n -> invalid_arg ("WLANThermo.alarm_of_int: " ^ string_of_int n)
+
+    let on = { push = true; buzzer = true }
+    let off = { push = false; buzzer = false }
+    let push_on alarm = { alarm with push = true }
+    let push_off alarm = { alarm with push = false }
+    let buzzer_on alarm = { alarm with buzzer = true }
+    let buzzer_off alarm = { alarm with buzzer = false }
+
+  end
+
+module Color =
+  struct
+
+    type t =
+      { red : int;
+        green : int;
+        blue : int }
+
+    let clamp_channel c =
+      min (max c 0) 255
+
+    let to_string c =
+      Printf.sprintf
+        "#%02X%02X%02X"
+        (clamp_channel c.red)
+        (clamp_channel c.green)
+        (clamp_channel c.blue)
+  end
+
 type temperature =
   { channel : int;
     t : float;
@@ -64,92 +120,70 @@ let print_battery ?ssl ~host () =
     percentage
     (if charging then "(charging)" else "(not charging)")
 
-type alarm =
-  | Silent
-  | Push
-  | Buzzer
-  | Push_and_Buzzer
+module Channel_Mod =
+  struct
 
-let alarm_to_int = function
-  | Silent -> 0
-  | Push -> 1
-  | Buzzer -> 2
-  | Push_and_Buzzer -> 3
+    type t  =
+      { number : int;
+        name : string option;
+        (* typ : integer option; *)
+        (* at the moment it's always 0 for channel 1-8 and 15 for channel 9 *)
+        min : float option;
+        max : float option;
+        alarm : Alarm.t option;
+        color : Color.t option }
 
-type color =
-  { red : int;
-    green : int;
-    blue : int }
+    let unchanged ch =
+      { number = ch;
+        name = None;
+        min = None;
+        max = None;
+        alarm = None;
+        color = None }
 
-let clamp_channel c =
-  min (max c 0) 255
+    let int_to_json name n = [ name, `Int n ]
+    let float_to_json name x = [ name, `Float x ]
+    let string_to_json name s = [ name, `String s ]
+    let alarm_to_json name a = [ name, `Int (Alarm.to_int a) ]
+    let color_to_json name c = [ name, `String (Color.to_string c) ]
 
-let color_to_string c =
-  Printf.sprintf
-    "#%02X%02X%02X"
-    (clamp_channel c.red)
-    (clamp_channel c.green)
-    (clamp_channel c.blue)
+    let option_to_json f name = function
+      | None -> []
+      | Some v -> f name v
 
-type channel  =
-  { number : int;
-    name : string option;
-    (* typ : integer option; *)
-    (* at the moment it's always 0 for channel 1-8 and 15 for channel 9 *)
-    min : float option;
-    max : float option;
-    alarm : alarm option;
-    color : color option }
+    let int_option_to_json = option_to_json int_to_json
+    let float_option_to_json = option_to_json float_to_json
+    let string_option_to_json = option_to_json string_to_json
+    let alarm_option_to_json = option_to_json alarm_to_json
+    let color_option_to_json = option_to_json color_to_json
 
-let plain_channel ch =
-  { number = ch;
-    name = None;
-    min = None;
-    max = None;
-    alarm = None;
-    color = None }
+    let to_json ch =
+      `Assoc ( int_to_json "number" ch.number
+               @ string_option_to_json "name" ch.name
+               @ float_option_to_json "min" ch.min
+               @ float_option_to_json "max" ch.max
+               @ alarm_option_to_json "alarm" ch.alarm
+               @ color_option_to_json "color" ch.color )
 
-let int_to_json name n = [ name, `Int n ]
-let float_to_json name x = [ name, `Float x ]
-let string_to_json name s = [ name, `String s ]
-let alarm_to_json name a = [ name, `Int (alarm_to_int a) ]
-let color_to_json name c = [ name, `String (color_to_string c) ]
+    let min_max ch min max =
+      let channel = unchanged ch in
+      to_json { channel with min = Some min; max = Some max }
 
-let option_to_json f name = function
-  | None -> []
-  | Some v -> f name v
+    let min ch min =
+      let channel = unchanged ch in
+      to_json { channel with min = Some min }
 
-let int_option_to_json = option_to_json int_to_json
-let float_option_to_json = option_to_json float_to_json
-let string_option_to_json = option_to_json string_to_json
-let alarm_option_to_json = option_to_json alarm_to_json
-let color_option_to_json = option_to_json color_to_json
+    let max ch max =
+      let channel = unchanged ch in
+      to_json { channel with max = Some max }
 
-let channel_to_json ch =
-  `Assoc ( int_to_json "number" ch.number
-           @ string_option_to_json "name" ch.name
-           @ float_option_to_json "min" ch.min
-           @ float_option_to_json "max" ch.max
-           @ alarm_option_to_json "alarm" ch.alarm
-           @ color_option_to_json "color" ch.color )
-
-let channel_min_max ch min max =
-  let channel = plain_channel ch in
-  channel_to_json { channel with min = Some min; max = Some max }
-
-let channel_min ch min =
-  let channel = plain_channel ch in
-  channel_to_json { channel with min = Some min }
-
-let channel_max ch max =
-  let channel = plain_channel ch in
-  channel_to_json { channel with max = Some max }
+  end
 
 (* "PATCH" doesn't appear to work, but "POST" works even with
    incomplete records. *)
 
 let set_channel_range ?ssl ~host ch (min, max) =
-  let command = channel_min_max ch min max in
+  let command = Channel_Mod.min_max ch min max in
   let open Yojson.Basic.Util in
   match post_json ?ssl ~host "setchannels" command with
   | `Bool true -> ()
