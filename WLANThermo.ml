@@ -75,57 +75,6 @@ module Color =
 
   end
 
-type temperature =
-  { channel : int;
-    t : float;
-    t_min : float;
-    t_max : float }
-
-let temperatures data =
-  let open Yojson.Basic.Util in
-  let channel_list = data |> member "channel" |> to_list in
-  List.fold_left
-    (fun acc channel ->
-      let t = channel |> member "temp" |> to_float in
-      if t < 999.0 then
-        { channel = channel |> member "number" |> to_int;
-          t;
-          t_min = channel |> member "min" |> to_float;
-          t_max = channel |> member "max" |> to_float } :: acc
-      else
-        acc)
-    [] channel_list
-
-let temperature_opt data channel =
-  List.find_opt (fun t -> t.channel = channel) (temperatures data)
-
-let format_temperature t =
-  let value = sprintf "channel #%d: %5.1f deg" t.channel t.t
-  and interval = sprintf "[%5.1f,%5.1f]" t.t_min t.t_max in
-  if t.t_max < t.t_min then
-    value ^ " ?? " ^ interval ^ " is inverted!"
-  else if t.t < t.t_min then
-    value ^ " << " ^ interval
-  else if t.t > t.t_max then
-    value ^ " >> " ^ interval
-  else
-    value ^ " in " ^ interval
-
-open ThoCurl
-
-let print_temperature ?ssl ~host ch =
-  let data = get_json ?ssl ~host "data" in
-  begin match temperature_opt data ch with
-  | None -> printf "channel #%d: disconnected\n" ch
-  | Some t -> format_temperature t |> print_endline
-  end
-
-let print_temperatures ?ssl ~host () =
-  let data = get_json ?ssl ~host "data" in
-  List.iter
-    (fun t -> format_temperature t |> print_endline)
-    (List.sort (fun t1 t2 -> compare t1.channel t2.channel) (temperatures data))
-
 module System =
   struct
 
@@ -309,18 +258,6 @@ module Channel =
 
   end
 
-(* "PATCH" doesn't appear to work, but "POST" works even with
-   incomplete records. *)
-
-let set_channel_range ?ssl ~host ch (min, max) =
-  let command = Channel.min_max ch min max in
-  let open Yojson.Basic.Util in
-  match post_json ?ssl ~host "setchannels" command with
-  | `Bool true -> ()
-  | `Bool false -> failwith "response: false"
-  | response ->
-     failwith ("unexpected: " ^ Yojson.Basic.to_string response)
-
 module Pitmaster =
   struct
 
@@ -366,10 +303,37 @@ module Data =
 
   end
 
+open ThoCurl
+
 let print_battery ?ssl ~host () =
   let system = get_json ?ssl ~host "data" |> Data.system_of_json in
   printf
     "battery %3d%% %s\n"
     system.charge
     (if system.charging then "(charging)" else "(not charging)")
+
+let print_temperatures ?ssl ~host () =
+  let channels = get_json ?ssl ~host "data" |> Data.channels_of_json in
+  List.iter
+    (fun ch -> Channel.format ch |> print_endline)
+    channels
+
+let print_temperature ?ssl ~host n =
+  let channels = get_json ?ssl ~host "data" |> Data.channels_of_json in
+  begin match List.find_opt (fun ch -> ch.Channel.number = n) channels with
+  | None -> printf "channel #%d: disconnected\n" n
+  | Some ch -> Channel.format ch |> print_endline
+  end
+
+(* "PATCH" doesn't appear to work, but "POST" works even with
+   incomplete records. *)
+
+let set_channel_range ?ssl ~host ch (min, max) =
+  let command = Channel.min_max ch min max in
+  let open Yojson.Basic.Util in
+  match post_json ?ssl ~host "setchannels" command with
+  | `Bool true -> ()
+  | `Bool false -> failwith "response: false"
+  | response ->
+     failwith ("unexpected: " ^ Yojson.Basic.to_string response)
 
