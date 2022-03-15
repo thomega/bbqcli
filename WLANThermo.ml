@@ -2,40 +2,53 @@
 
 open Printf
 
-module Alarm =
+module type Alarm =
+  sig
+    type t
+    val none : t
+    val push : t
+    val buzzer : t
+    val all : t
+    val to_int : t -> int
+    val of_int : int -> t
+    val is_on : t -> t -> bool
+    val switch_on : t -> t -> t
+    val format : t -> string
+  end
+
+module Alarm : Alarm =
   struct
 
-    (* We could just as well have used bitarithmetic. *)
+    type t = int
+    let none = 0
+    let push = 1
+    let buzzer = 2
+    let all = push lor buzzer
 
-    type t =
-      { push : bool;
-        buzzer : bool }
+    let to_int a = a
 
-    let to_int = function
-      | { push = false; buzzer = false } -> 0
-      | { push = true; buzzer = false } -> 1
-      | { push = false; buzzer = true } -> 2
-      | { push = true; buzzer = true } -> 3
+    let of_int n =
+      if 0 <= n && n <= 3 then
+        n
+      else
+        invalid_arg ("WLANThermo.alarm_of_int: " ^ string_of_int n)
 
-    let format = function
-      | { push = false; buzzer = false } -> "off"
-      | { push = true; buzzer = false } -> "push"
-      | { push = false; buzzer = true } -> "buzzer"
-      | { push = true; buzzer = true } -> "push and buzzer"
+    let is_on which a =
+      (a land which) <> 0
 
-    let of_int = function
-      | 0 -> { push = false; buzzer = false }
-      | 1 -> { push = true; buzzer = false }
-      | 2 -> { push = false; buzzer = true }
-      | 3 -> { push = true; buzzer = true }
-      | n -> invalid_arg ("WLANThermo.alarm_of_int: " ^ string_of_int n)
+    let switch_on which a =
+      a lor which
 
-    let on = { push = true; buzzer = true }
-    let off = { push = false; buzzer = false }
-    let push_on alarm = { alarm with push = true }
-    let push_off alarm = { alarm with push = false }
-    let buzzer_on alarm = { alarm with buzzer = true }
-    let buzzer_off alarm = { alarm with buzzer = false }
+    let switch_off which a =
+      a land (lnot which)
+
+    (* A bit artificial, but always 4 characters. *)
+    let format a =
+      match is_on push a, is_on buzzer a with
+      | false, false -> "none"
+      | true, false -> "push"
+      | false, true -> "buzz"
+      | true, true -> "both"
 
   end
 
@@ -157,6 +170,22 @@ module Channel =
         color = ch |> member "color" |> to_string |> Color.of_string;
         fixed = ch |> member "fixed" |> to_bool;
         connected = ch |> member "connected" |> to_bool }
+
+    let format ch =
+      let interval = sprintf "[%5.1f,%5.1f]" ch.t_min ch.t_max in
+      match ch.t with
+      | None -> sprintf "channel #%d: inactive  %s" ch.channel interval
+      | Some t ->
+         let value =
+           sprintf "channel #%d: %5.1f deg" ch.channel t in
+         if ch.t_max < ch.t_min then
+           value ^ " ?? " ^ interval ^ " is inverted!"
+         else if t < ch.t_min then
+           value ^ " << " ^ interval
+         else if t > ch.t_max then
+           value ^ " >> " ^ interval
+         else
+           value ^ " in " ^ interval
 
   end
 
