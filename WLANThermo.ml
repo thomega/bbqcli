@@ -52,7 +52,14 @@ module Alarm : Alarm =
 
   end
 
-module Color =
+module type Color =
+  sig
+    type t
+    val to_string : t -> string
+    val of_string : string -> t
+  end
+
+module Color : Color =
   struct
 
     type t =
@@ -75,7 +82,21 @@ module Color =
 
   end
 
-module System =
+module type System =
+  sig
+    type t_unit
+    type cloud
+    type t = private
+      { time : int;
+        t_unit : t_unit;
+        charge : int;
+        charging : bool;
+        rssi : int;
+        cloud : cloud }
+    val of_json : Yojson.Basic.t -> t
+  end
+
+module System : System =
   struct
 
     type t_unit =
@@ -131,7 +152,17 @@ module System =
 
   end
 
-module Temperature =
+module type Temperature =
+  sig
+    type t = private
+      | Inactive
+      | Too_low of float
+      | Too_high of float
+      | In_range of float
+    val of_float : float * float -> float -> t
+  end
+
+module Temperature : Temperature =
   struct
 
     type t =
@@ -155,7 +186,26 @@ module Temperature =
 
   end
 
-module Channel =
+module type Channel =
+  sig
+    type t = private
+      { number : int;
+        name : string;
+        typ: int;
+        t : Temperature.t;
+        t_min : float;
+        t_max : float;
+        alarm : Alarm.t;
+        color : Color.t;
+        fixed : bool;
+        connected : bool }
+    val of_json : Yojson.Basic.t -> t
+    val is_active : t -> bool
+    val format : t -> string
+    val min_max : int -> float -> float -> Yojson.Basic.t
+  end
+
+module Channel : Channel =
   struct
 
     type t =
