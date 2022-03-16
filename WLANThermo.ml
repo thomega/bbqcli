@@ -401,7 +401,41 @@ module Data =
 
   end
 
-let format_temperatures ?(all=false) options =
+module Info =
+  struct
+
+    type t = string
+
+    let get options =
+      ThoCurl.get options "info"
+
+  end
+
+
+module Settings =
+  struct
+
+    type t = Yojson.Basic.t
+
+    let get_json options =
+      ThoCurl.get_json options "settings"
+
+  end
+
+
+let data = Data.get_json
+let info = Info.get
+let settings = Settings.get_json
+
+
+let format_battery options =
+  let system = ThoCurl.get_json options "data" |> Data.system_of_json in
+  Printf.sprintf
+    "battery %3d%% %s"
+    system.charge
+    (if system.charging then "(charging)" else "(not charging)")
+
+let format_channels ?(all=false) options =
   let filter =
     if all then
       fun l -> l
@@ -410,28 +444,12 @@ let format_temperatures ?(all=false) options =
   ThoCurl.get_json options "data" |>
     Data.channels_of_json |> filter |> List.map Channel.format
 
-let format_temperature options ch =
+let format_channel options ch =
   let channels = ThoCurl.get_json options "data" |> Data.channels_of_json in
   begin match Channel.find_opt ch channels with
   | None -> Printf.sprintf "channel #%d: unavailable" ch
   | Some channel -> Channel.format channel
   end
-
-let info options =
-  ThoCurl.get options "info"
-
-let data options =
-  Data.get_json options
-
-let settings options =
-  ThoCurl.get_json options "settings"
-
-let format_battery options =
-  let system = ThoCurl.get_json options "data" |> Data.system_of_json in
-  Printf.sprintf
-    "battery %3d%% %s"
-    system.charge
-    (if system.charging then "(charging)" else "(not charging)")
 
 let update_channels common ?all range_opt push beep channels =
   let available = data common |> Data.channels_of_json in

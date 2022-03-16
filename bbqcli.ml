@@ -1,5 +1,7 @@
 (* bbqcli.ml -- CLI etc. for the WLANThermo API *)
 
+module WT = WLANThermo
+
 let host_default = "wlanthermo"
 
 let print_json j =
@@ -167,9 +169,9 @@ module Temperature : Unit_Cmd =
         "temperature of channel(s) %s\n"
         (String.concat "," (List.map string_of_int channels));
       match channels with
-      | [] -> WLANThermo.format_temperatures ?all common |> List.iter print_endline
+      | [] -> WT.format_channels ?all common |> List.iter print_endline
       | ch_list ->
-         ch_list |> List.map (WLANThermo.format_temperature common) |> List.iter print_endline
+         ch_list |> List.map (WT.format_channel common) |> List.iter print_endline
 
     let term =
       let open Term in
@@ -185,16 +187,14 @@ module Temperature : Unit_Cmd =
 
 end
 
-(* Put the long form of equivalent options last so that they are
-   used for the description of the default in the manpage. *)
-let switch =
-  let open WLANThermo in
-  Arg.enum [("+", On); ("on", On); ("-", Off); ("off", Off)]
-
-let switch_docv = "on|+|off|-"
-
 module Alarm : Unit_Cmd =
   struct
+
+    (* Put the long form of equivalent options last so that they are
+       used for the description of the default in the manpage. *)
+    let switch_list = [("+", WT.On); ("on", WT.On); ("-", WT.Off); ("off", WT.Off)]
+    let switch = Arg.enum switch_list
+    let switch_docv = String.concat "|" (List.map fst switch_list)
 
     (* (float * float) option *)
     let range_arg =
@@ -208,21 +208,21 @@ module Alarm : Unit_Cmd =
       let doc = "Switch the push alarm on/off." in
       let open Arg in
       value
-      & opt (some switch) ~vopt:(Some WLANThermo.On) None
+      & opt (some switch) ~vopt:(Some WT.On) None
       & info ["p"; "push"] ~docv:switch_docv ~doc
 
     let beep_arg =
       let doc = "Switch the beep alarm on/off." in
       let open Arg in
       value
-      & opt (some switch) ~vopt:(Some WLANThermo.On) None
+      & opt (some switch) ~vopt:(Some WT.On) None
       & info ["b"; "beep"] ~docv:switch_docv  ~doc
 
     let term =
       let open Term in
       const
         (fun common all channels range push beep ->
-          WLANThermo.update_channels common ~all range push beep channels)
+          WT.update_channels common ~all range push beep channels)
       $ Common.term
       $ all_arg
       $ Channels.term
@@ -234,7 +234,7 @@ module Alarm : Unit_Cmd =
       let man = [
           `S Manpage.s_description;
           `P "Change the temperature limits and associated alarms \
-              on a WLANThermo Mini V3 using the HTTP API." ] @ man_footer in
+              on a WT Mini V3 using the HTTP API." ] @ man_footer in
       Cmd.v (Cmd.info "alarm" ~man) term
 
   end
@@ -245,7 +245,7 @@ module Info : Unit_Cmd =
 
     let term =
       let open Term in
-      const (fun common -> WLANThermo.info common |> print_endline)
+      const (fun common -> WT.info common |> print_endline)
       $ Common.term
 
     let cmd =
@@ -259,7 +259,7 @@ module Data : Unit_Cmd =
 
     let term =
       let open Term in
-      const (fun common -> WLANThermo.data common |> print_json)
+      const (fun common -> WT.data common |> print_json)
       $ Common.term
 
     let cmd =
@@ -273,7 +273,7 @@ module Settings : Unit_Cmd =
 
     let term =
       let open Term in
-      const (fun common -> WLANThermo.settings common |> print_json)
+      const (fun common -> WT.settings common |> print_json)
       $ Common.term
 
     let cmd =
@@ -286,7 +286,7 @@ module Battery : Unit_Cmd =
 
     let term =
       let open Term in
-      const (fun common -> WLANThermo.format_battery common |> print_endline)
+      const (fun common -> WT.format_battery common |> print_endline)
       $ Common.term
 
     let cmd =
