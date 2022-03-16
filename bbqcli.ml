@@ -67,6 +67,12 @@ module Common : sig val term : ThoCurl.options Term.t end =
 
   end
 
+let all_arg =
+  let doc = "Include the inactive channels." in
+  let open Arg in
+  value
+  & opt bool ~vopt:true false
+  & info ["a"; "all"] ~docv:"true/false" ~doc
 
 module type Utils =
   sig
@@ -156,28 +162,28 @@ module type Unit_Cmd =
 module Temperature : Unit_Cmd =
   struct
 
-    let print_temperatures common channels =
+    let print_temperatures ?all common channels =
       Printf.printf
         "temperature of channel(s) %s\n"
         (String.concat "," (List.map string_of_int channels));
       match channels with
-      | [] -> WLANThermo.format_temperatures common |> List.iter print_endline
+      | [] -> WLANThermo.format_temperatures ?all common |> List.iter print_endline
       | ch_list ->
          ch_list |> List.map (WLANThermo.format_temperature common) |> List.iter print_endline
 
     let term =
       let open Term in
       const
-        (fun common channels ->
-          print_temperatures common channels)
+        (fun common all channels ->
+          print_temperatures ~all common channels)
       $ Common.term
+      $ all_arg
       $ Channels.term
 
     let cmd =
       Cmd.v (Cmd.info "temperature") term
 
 end
-
 
 (* Put the long form of equivalent options last so that they are
    used for the description of the default in the manpage. *)
@@ -215,9 +221,10 @@ module Alarm : Unit_Cmd =
     let term =
       let open Term in
       const
-        (fun common channels temperature_range push beep ->
-          WLANThermo.Channel.set common channels temperature_range push beep)
+        (fun common all channels temperature_range push beep ->
+          WLANThermo.Channel.set ~all common channels temperature_range push beep)
       $ Common.term
+      $ all_arg
       $ Channels.term
       $ temperature_range_arg
       $ push_alarm_arg

@@ -53,8 +53,8 @@ module type Channel =
     val of_json : Yojson.Basic.t -> t
     val is_active : t -> bool
     val format : t -> string
-    val set : ThoCurl.options -> int list -> (float * float) option ->
-              switch option -> switch option -> unit
+    val set : ThoCurl.options -> ?all:bool -> int list ->
+              (float * float) option -> switch option -> switch option -> unit
   end
 
 module Channel : Channel
@@ -65,5 +65,5 @@ val settings : ThoCurl.options -> Yojson.Basic.t
 val format_battery : ThoCurl.options -> string
 
 val format_temperature : ThoCurl.options -> int -> string
-val format_temperatures : ThoCurl.options -> string list
+val format_temperatures : ?all:bool -> ThoCurl.options -> string list
 
