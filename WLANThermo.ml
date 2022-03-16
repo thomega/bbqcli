@@ -309,32 +309,33 @@ module Channel : Channel =
                @ alarm_option_to_json "alarm" ch.mod_alarm
                @ color_option_to_json "color" ch.mod_color )
 
-    let min_max ch min max =
-      let channel = unchanged ch in
-      mod_to_json { channel with mod_t_min = Some min; mod_t_max = Some max }
+    let apply_range_opt range_opt mod_channel =
+      match range_opt with
+      | None -> mod_channel
+      | Some (min, max) -> { mod_channel with mod_t_min = Some min; mod_t_max = Some max }
 
-    let min ch min =
-      let channel = unchanged ch in
-      mod_to_json { channel with mod_t_min = Some min }
+    let apply_push_opt push_opt mod_channel =
+      match push_opt with
+      | None -> mod_channel
+      | Some On -> failwith "apply_push_opt"
+      | Some Off -> failwith "apply_push_opt"
 
-    let max ch max =
-      let channel = unchanged ch in
-      mod_to_json { channel with mod_t_max = Some max }
-
-    let apply_range ch = function
-      | None -> mod_to_json (unchanged ch)
-      | Some (min, max) -> min_max ch min max
+    let apply_beep_opt beep_opt mod_channel =
+      match beep_opt with
+      | None -> mod_channel
+      | Some On -> failwith "apply_beep_opt"
+      | Some Off -> failwith "apply_beep_opt"
 
     (* "PATCH" doesn't appear to work, but "POST" works even with
        incomplete records. *)
-    let update options ?(all=false) ch range_opt push beep available =
-      ignore (push);
-      ignore (beep);
+    let update options ?(all=false) ch range_opt push_opt beep_opt available =
+      ignore (push_opt);
+      ignore (beep_opt);
       match find_opt ch available with
       | None -> ()
       | Some channel ->
          if all || is_active channel then
-           let command = apply_range ch range_opt in
+           let command = unchanged ch |> apply_range_opt range_opt |> mod_to_json in
            let open Yojson.Basic.Util in
            match ThoCurl.post_json options "setchannels" command with
            | `Bool true -> ()
