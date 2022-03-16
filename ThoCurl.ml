@@ -3,9 +3,8 @@
 type options =
   { ssl : bool;
     host : string;
-    verbosity : int  }
-
-let timeout = 10 (* seconds *)
+    verbosity : int;
+    timeout : int option }
 
 exception Invalid_JSON of string * string
 
@@ -34,7 +33,10 @@ let do_curl options path extra_setup =
   begin try
       let curl = Curl.init () in
       Curl.set_url curl (url_of_path options path);
-      Curl.set_timeout curl timeout;
+      begin match options.timeout with
+      | None -> ()
+      | Some t -> Curl.set_timeout curl t
+      end;
       Curl.set_errorbuffer curl error_response;
       Curl.set_writefunction curl (fill_buffer result);
       extra_setup curl;

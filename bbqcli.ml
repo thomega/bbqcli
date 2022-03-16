@@ -56,14 +56,23 @@ module Common : sig val term : ThoCurl.options Term.t end =
       & opt int 0
       & info ["v"; "verbosity"; "verbose"] ~docv:"VERBOSITY" ~doc ~docs ~env
 
+    let timeout_arg =
+      let doc = "Wait only $(docv) for response." in
+      let env = Cmd.Env.info "WLANTHERMO_TIMEOUT" in
+      let open Arg in
+      value
+      & opt (some int) None
+      & info ["T"; "timeout"] ~docv:"SECONDS" ~doc ~docs ~env
+
     let term =
       let open Term in
       const
-        (fun ssl host verbosity ->
-          { ThoCurl.ssl; ThoCurl.host; ThoCurl.verbosity })
+        (fun ssl host verbosity timeout ->
+          { ThoCurl.ssl; ThoCurl.host; ThoCurl.verbosity; ThoCurl.timeout })
       $ ssl_arg
       $ host_arg
       $ verbose_arg
+      $ timeout_arg
 
   end
 
