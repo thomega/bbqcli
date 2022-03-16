@@ -27,11 +27,11 @@ let url_of_path options path =
       "http" in
   protocol ^ "://" ^ options.host ^ "/" ^ path
 
-let fill_buffer buffer data =
+let write_to buffer data =
   Buffer.add_string buffer data;
   String.length data
 
-let do_curl options path extra_setup =
+let do_curl options path additional_setup =
   let result = Buffer.create 16384
   and error_response = ref "" in
   Curl.global_init Curl.CURLINIT_GLOBALALL;
@@ -43,8 +43,8 @@ let do_curl options path extra_setup =
       | Some t -> Curl.set_timeout curl t
       end;
       Curl.set_errorbuffer curl error_response;
-      Curl.set_writefunction curl (fill_buffer result);
-      extra_setup curl;
+      Curl.set_writefunction curl (write_to result);
+      additional_setup curl;
       Curl.perform curl;
       Curl.cleanup curl
     with
@@ -58,10 +58,10 @@ let do_curl options path extra_setup =
   Curl.global_cleanup ();
   Buffer.contents result
 
-let no_extras _ = ()
+let nothing_else _curl = ()
 
 let get options path =
-  do_curl options path no_extras
+  do_curl options path nothing_else
 
 let get_json options path =
   get options path |> string_to_json
