@@ -222,7 +222,7 @@ module Alarm : Unit_Cmd =
       let open Term in
       const
         (fun common all channels temperature_range push beep ->
-          WLANThermo.Channel.set ~all common channels temperature_range push beep)
+          WLANThermo.update_channel ~all common channels temperature_range push beep)
       $ Common.term
       $ all_arg
       $ Channels.term

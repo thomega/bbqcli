@@ -205,9 +205,10 @@ module type Channel =
         connected : bool }
     val of_json : Yojson.Basic.t -> t
     val is_active : t -> bool
+    val member : int -> t list -> bool
+    val find_opt : int -> t list -> t option
     val format : t -> string
-    val set : ThoCurl.options -> ?all:bool -> int list ->
-              (float * float) option -> switch option -> switch option -> unit
+    val update : ThoCurl.options -> ?all:bool -> int -> float * float -> t list -> unit
   end
 
 module Channel : Channel =
@@ -230,6 +231,12 @@ module Channel : Channel =
       match ch.t with
       | Inactive -> false
       | Too_low _ | Too_high _ | In_range _ -> true
+
+    let member n channels =
+      List.exists (fun ch -> ch.number = n) channels
+
+    let find_opt n channels =
+      List.find_opt (fun ch -> ch.number = n) channels
 
     let of_json ch =
       let open Yojson.Basic.Util in
@@ -317,31 +324,20 @@ module Channel : Channel =
 
     (* "PATCH" doesn't appear to work, but "POST" works even with
        incomplete records. *)
-    let set_channel_range options ?(all=false) ch (min, max) =
-      ignore all;
-      let command = min_max ch min max in
-      let open Yojson.Basic.Util in
-      match ThoCurl.post_json options "setchannels" command with
-      | `Bool true -> ()
-      | `Bool false -> failwith "response: false"
-      | response ->
-         failwith ("unexpected: " ^ Yojson.Basic.to_string response)
-
-    let set common ?all channels temperature_range _push _beep =
-      Printf.eprintf
-        "alarm of channel(s) %s on %s://%s set to range %s:\n"
-        (String.concat "," (List.map string_of_int channels))
-        (if common.ThoCurl.ssl then "https" else "http") common.ThoCurl.host
-        (match temperature_range with
-         | None -> "?"
-         | Some (t1, t2) -> "[" ^ string_of_float t1 ^ "," ^ string_of_float t2 ^ "]");
-      flush stderr;
-      match temperature_range with
+    let update options ?(all=false) ch (min, max) channels =
+      match find_opt ch channels with
       | None -> ()
-      | Some r ->
-         List.iter
-           (fun ch -> set_channel_range common ?all ch r)
-           channels
+      | Some channel ->
+         if all || is_active channel then
+           let command = min_max ch min max in
+           let open Yojson.Basic.Util in
+           match ThoCurl.post_json options "setchannels" command with
+           | `Bool true -> ()
+           | `Bool false -> failwith "response: false"
+           | response ->
+              failwith ("unexpected: " ^ Yojson.Basic.to_string response)
+         else
+           ()
 
   end
 
@@ -399,11 +395,11 @@ let format_temperatures ?(all=false) options =
   ThoCurl.get_json options "data" |>
     Data.channels_of_json |> filter |> List.map Channel.format
 
-let format_temperature options n =
+let format_temperature options ch =
   let channels = ThoCurl.get_json options "data" |> Data.channels_of_json in
-  begin match List.find_opt (fun ch -> ch.Channel.number = n) channels with
-  | None -> Printf.sprintf "channel #%d: unavailable" n
-  | Some ch -> Channel.format ch
+  begin match Channel.find_opt ch channels with
+  | None -> Printf.sprintf "channel #%d: unavailable" ch
+  | Some channel -> Channel.format channel
   end
 
 let info options =
@@ -421,3 +417,13 @@ let format_battery options =
     "battery %3d%% %s"
     system.charge
     (if system.charging then "(charging)" else "(not charging)")
+
+let update_channel common ?all channels temperature_range _push _beep =
+  match temperature_range with
+  | None -> ()
+  | Some r ->
+     let available = data common |> Data.channels_of_json in
+     List.iter
+       (fun ch -> Channel.update common ?all ch r available)
+       channels
+

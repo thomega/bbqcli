@@ -1,5 +1,6 @@
 (* WLANThermo.ml -- WLANThermo API *)
 
+(*
 module type Alarm =
   sig
     type t
@@ -33,10 +34,11 @@ module type Temperature =
     val of_float : float * float -> float -> t
   end
 module Temperature : Temperature
-
+ *)
 type switch = On | Off
 val switch_to_string : switch -> string
 
+(*
 module type Channel =
   sig
     type t = private
@@ -53,11 +55,10 @@ module type Channel =
     val of_json : Yojson.Basic.t -> t
     val is_active : t -> bool
     val format : t -> string
-    val set : ThoCurl.options -> ?all:bool -> int list ->
-              (float * float) option -> switch option -> switch option -> unit
+    val set_range : ThoCurl.options -> ?all:bool -> int -> float * float -> unit
   end
-
 module Channel : Channel
+ *)
 
 val info : ThoCurl.options -> string
 val data : ThoCurl.options -> Yojson.Basic.t
@@ -67,3 +68,6 @@ val format_battery : ThoCurl.options -> string
 val format_temperature : ThoCurl.options -> int -> string
 val format_temperatures : ?all:bool -> ThoCurl.options -> string list
 
+val update_channel :
+  ThoCurl.options -> ?all:bool -> int list ->
+  (float * float) option -> switch option -> switch option -> unit
