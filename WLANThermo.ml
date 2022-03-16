@@ -306,6 +306,9 @@ module Channel : Channel =
       let channel = unchanged ch in
       mod_to_json { channel with mod_t_max = Some max }
 
+    let diff _ch_old _ch_new =
+      ()
+
   end
 
 module Pitmaster =
