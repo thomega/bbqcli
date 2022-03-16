@@ -2,7 +2,8 @@
 
 type options =
   { ssl : bool;
-    host : string }
+    host : string;
+    verbosity : int  }
 
 let timeout = 10 (* seconds *)
 

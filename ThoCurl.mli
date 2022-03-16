@@ -2,7 +2,8 @@
 
 type options =
   { ssl : bool;
-    host : string }
+    host : string;
+    verbosity : int }
 
 type content =
   | JSON

@@ -48,11 +48,22 @@ module Common : sig val term : ThoCurl.options Term.t end =
       & opt string host_default
       & info ["H"; "host"] ~docv:"HOST" ~doc ~docs ~env
 
+    let verbose_arg =
+      let doc = "Be more verbose." in
+      let env = Cmd.Env.info "WLANTHERMO_VERBOSITY" in
+      let open Arg in
+      value
+      & opt int 0
+      & info ["v"; "verbosity"; "verbose"] ~docv:"VERBOSITY" ~doc ~docs ~env
+
     let term =
       let open Term in
-      const (fun ssl host -> { ThoCurl.ssl; ThoCurl.host })
+      const
+        (fun ssl host verbosity ->
+          { ThoCurl.ssl; ThoCurl.host; ThoCurl.verbosity })
       $ ssl_arg
       $ host_arg
+      $ verbose_arg
 
   end
 
