@@ -2,17 +2,8 @@
 
 let host_default = "wlanthermo"
 
-let my_name = Sys.argv.(0)
-
-let separator = String.make 72 '='
-
 let print_json j =
   Yojson.Basic.pretty_to_string j |> print_endline
-
-(* with
-   | ThoCurl.Invalid_JSON (msg, s) ->
-      Printf.printf "Invalid JSON:\n%s\n%s\n%s\n%s\n" msg separator s separator
- *)
 
 open Cmdliner
 

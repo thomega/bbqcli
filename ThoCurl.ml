@@ -6,13 +6,18 @@ type options =
     verbosity : int;
     timeout : int option }
 
-exception Invalid_JSON of string * string
+let separator = String.make 72 '='
 
 let string_to_json s =
   try
     Yojson.Basic.from_string s
   with
-  | Yojson.Json_error msg -> raise (Invalid_JSON (msg, s))
+  | Yojson.Json_error msg ->
+     Printf.eprintf
+       "Response is not valid JSON:\n%s\n%s\n%s\n%s\n"
+       msg separator s separator;
+     flush stderr;
+     failwith "ThoCurl.string_to_json: invalid JSON"
 
 let url_of_path options path =
   let protocol =
