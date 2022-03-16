@@ -24,43 +24,37 @@ let man_footer =
     `S Manpage.s_bugs;
     `P "Report bugs to <ohl@physik.uni-wuerzburg.de>." ]
 
-let ssl_arg =
-  let doc = "Use SSL to connect to the host." in
-  let env = Cmd.Env.info "WLANTHERMO_SSL" in
-  let open Arg in
-  value
-  & opt bool ~vopt:true false
-  & info ["s"; "ssl"] ~docv:"true/false" ~doc ~env
 
-let host_arg =
-  let doc = "Connect to the host $(docv)." in
-  let env = Cmd.Env.info "WLANTHERMO_HOST" in
-  let open Arg in
-  value
-  & opt string host_default
-  & info ["H"; "host"] ~docv:"HOST" ~doc ~env
+module Common : sig val term : ThoCurl.options Term.t end =
+  struct
 
-let common_options_term =
-  let open Term in
-  const (fun ssl host -> { ThoCurl.ssl; ThoCurl.host })
-  $ ssl_arg
-  $ host_arg
+    let docs = Manpage.s_common_options
 
-let envs =
-  [ Cmd.Env.info "WLANTHERMO_HOST" ~doc:"Overrides the default hostname.";
-    Cmd.Env.info "WLANTHERMO_SSL" ~doc:"If set, use https instead of htpp." ]
+    let ssl_arg =
+      let doc = "Use SSL to connect to the host. \
+                 This option should never be necessary or even used, \
+                 because WLANThermo does not understand SSL." in
+      let env = Cmd.Env.info "WLANTHERMO_SSL" in
+      let open Arg in
+      value
+      & opt bool ~vopt:true false
+      & info ["s"; "ssl"] ~docv:"true/false" ~doc ~docs ~env
 
-type switch = On | Off
+    let host_arg =
+      let doc = "Connect to the host $(docv)." in
+      let env = Cmd.Env.info "WLANTHERMO_HOST" in
+      let open Arg in
+      value
+      & opt string host_default
+      & info ["H"; "host"] ~docv:"HOST" ~doc ~docs ~env
 
-let switch_to_string = function
-  | On -> "on"
-  | Off -> "off"
+    let term =
+      let open Term in
+      const (fun ssl host -> { ThoCurl.ssl; ThoCurl.host })
+      $ ssl_arg
+      $ host_arg
 
-(* Put the long form of equivalent options last so that they are
-   used for the description of the default in the manpage. *)
-let switch = Arg.enum [("+", On); ("on", On); ("-", Off); ("off", Off)]
-
-let switch_docv = "on|+|off|-"
+  end
 
 
 module type Utils =
@@ -112,29 +106,36 @@ module Utils : Utils =
 
   end
 
-(* int list list *)
-let channels_arg =
-  let doc = "Select the channel(s) $(docv) (can be repeated)." in
-  let open Arg in
-  value
-  & opt_all (list int) []
-  & info ["c"; "channel"; "ch"] ~docv:"N[,M...]" ~doc
 
-(* (int * int) list list *)
-let channel_ranges_arg =
-  let doc = "Select the channels in the range $(docv) (can be repeated)." in
-  let open Arg in
-  value
-  & opt_all (list (pair ~sep:'-' int int)) []
-  & info ["C"; "channels"] ~docv:"FROM-TO" ~doc
+module Channels : sig val term : int list Term.t end =
+  struct
 
-let channels_term =
-  let open Term in
-  const
-    (fun channels channel_ranges ->
-      Utils.merge_integer_ranges channels channel_ranges)
-  $ channels_arg
-  $ channel_ranges_arg
+    (* int list list *)
+    let channels_arg =
+      let doc = "Select the channel(s) $(docv) (can be repeated)." in
+      let open Arg in
+      value
+      & opt_all (list int) []
+      & info ["c"; "channel"; "ch"] ~docv:"N[,M...]" ~doc
+
+    (* (int * int) list list *)
+    let channel_ranges_arg =
+      let doc = "Select the channels in the range $(docv) (can be repeated)." in
+      let open Arg in
+      value
+      & opt_all (list (pair ~sep:'-' int int)) []
+      & info ["C"; "channels"] ~docv:"FROM-TO" ~doc
+
+    let term =
+      let open Term in
+      const
+        (fun channels channel_ranges ->
+          Utils.merge_integer_ranges channels channel_ranges)
+      $ channels_arg
+      $ channel_ranges_arg
+
+  end
+
 
 module type Unit_Cmd =
   sig
@@ -157,14 +158,26 @@ module Temperature : Unit_Cmd =
       const
         (fun common channels ->
           print_temperatures common channels)
-      $ common_options_term
-      $ channels_term
+      $ Common.term
+      $ Channels.term
 
     let cmd =
       Cmd.v (Cmd.info "temperature") term
 
 end
 
+
+type switch = On | Off
+
+let switch_to_string = function
+  | On -> "on"
+  | Off -> "off"
+
+(* Put the long form of equivalent options last so that they are
+   used for the description of the default in the manpage. *)
+let switch = Arg.enum [("+", On); ("on", On); ("-", Off); ("off", Off)]
+
+let switch_docv = "on|+|off|-"
 
 module Alarm : Unit_Cmd =
   struct
@@ -217,8 +230,8 @@ module Alarm : Unit_Cmd =
       const
         (fun common channels temperature_range push beep ->
           set_alarms common channels temperature_range push beep)
-      $ common_options_term
-      $ channels_term
+      $ Common.term
+      $ Channels.term
       $ temperature_range_arg
       $ push_alarm_arg
       $ beep_alarm_arg
@@ -241,7 +254,7 @@ module Info : Unit_Cmd =
       const
         (fun common ->
           ThoCurl.get common "info" |> print_endline)
-      $ common_options_term
+      $ Common.term
 
     let cmd =
       Cmd.v (Cmd.info "info") term
@@ -257,7 +270,7 @@ module Data : Unit_Cmd =
       const
         (fun common ->
           ThoCurl.get_json common "data" |> print_json)
-      $ common_options_term
+      $ Common.term
 
     let cmd =
       Cmd.v (Cmd.info "data") term
@@ -273,7 +286,7 @@ module Settings : Unit_Cmd =
       const
         (fun common ->
           ThoCurl.get_json common "settings" |> print_json)
-      $ common_options_term
+      $ Common.term
 
     let cmd =
       Cmd.v (Cmd.info "settings") term
@@ -288,7 +301,7 @@ module Battery : Unit_Cmd =
       const
         (fun common ->
           WLANThermo.print_battery common ())
-      $ common_options_term
+      $ Common.term
 
     let cmd =
       Cmd.v (Cmd.info "battery") term
@@ -304,7 +317,7 @@ let main_cmd =
           using the HTTP API.";
       `S s_examples;
       `Pre "bbqcli -c 9 -r 80-110 -p on"] @ man_footer in
-  let info = Cmd.info "bbqcli" ~man ~envs in
+  let info = Cmd.info "bbqcli" ~man in
   Cmd.group info [Alarm.cmd; Temperature.cmd; Battery.cmd;
                   Data.cmd; Settings.cmd; Info.cmd]
 
