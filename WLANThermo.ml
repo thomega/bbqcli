@@ -45,9 +45,9 @@ module Alarm : Alarm =
     let format a =
       match is_on push a, is_on beep a with
       | false, false -> "none"
-      | true, false -> "push"
-      | false, true -> "buzz"
-      | true, true -> "both"
+      | true,  false -> "push"
+      | false, true  -> "beep"
+      | true,  true  -> "both"
 
   end
 
@@ -210,8 +210,8 @@ module type Channel =
     val find_opt : int -> t list -> t option
     val format : t -> string
     val update :
-      ThoCurl.options -> ?all:bool -> int -> (float * float) option ->
-      switch option -> switch option -> t list -> unit
+      ThoCurl.options -> ?all:bool -> (float * float) option ->
+      switch option -> switch option -> t list -> int -> unit
   end
 
 module Channel : Channel =
@@ -266,7 +266,9 @@ module Channel : Channel =
         | Too_low t ->  sprintf "%5.1f deg <<" t
         | Too_high t -> sprintf "%5.1f deg >>" t
         | In_range t -> sprintf "%5.1f deg in" t in
-      sprintf "channel #%d: %s %s" ch.number temperature interval
+      sprintf
+        "channel #%d: %s %s alarm=%s"
+        ch.number temperature interval (Alarm.format ch.alarm)
 
     type mod_t  =
       { mod_number : int;
@@ -329,9 +331,7 @@ module Channel : Channel =
       | None -> ch
       | Some on_off -> apply_alarm Alarm.beep ch on_off
 
-    let update options ?(all=false) ch range_opt push_opt beep_opt available =
-      ignore (push_opt);
-      ignore (beep_opt);
+    let update options ?(all=false) range_opt push_opt beep_opt available ch =
       match find_opt ch available with
       | None -> ()
       | Some channel ->
@@ -435,10 +435,9 @@ let format_battery options =
 
 let update_channels common ?all range_opt push beep channels =
   let available = data common |> Data.channels_of_json in
-  match channels with
-  | [] -> ()
-  | channels ->
-     List.iter
-       (fun ch -> Channel.update common ?all ch range_opt push beep available)
-       channels
+  let all_channels =
+    match channels with
+    | [] -> List.map (fun ch -> ch.Channel.number) available
+    | ch_list -> ch_list in
+  List.iter (Channel.update common ?all range_opt push beep available) all_channels
 
