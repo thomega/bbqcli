@@ -30,7 +30,7 @@ module Alarm : Alarm =
       if 0 <= n && n <= 3 then
         n
       else
-        invalid_arg ("WLANThermo.alarm_of_int: " ^ string_of_int n)
+        invalid_arg ("WLANThermo.Alarm.of_int: " ^ string_of_int n)
 
     let is_on which a =
       (a land which) <> 0
@@ -50,6 +50,7 @@ module Alarm : Alarm =
       | true,  true  -> "both"
 
   end
+
 
 module type Color =
   sig
@@ -80,6 +81,7 @@ module Color : Color =
       Scanf.sscanf s "#%02X%02X%02X" (fun red green blue -> { red; green; blue })
 
   end
+
 
 module type System =
   sig
@@ -151,6 +153,7 @@ module System : System =
 
   end
 
+
 module type Temperature =
   sig
     type t = private
@@ -185,11 +188,13 @@ module Temperature : Temperature =
 
   end
 
+
 type switch = On | Off
 
 let switch_to_string = function
   | On -> "on"
   | Off -> "off"
+
 
 module type Channel =
   sig
@@ -353,15 +358,45 @@ module Channel : Channel =
 
   end
 
+
 module Pitmaster =
   struct
 
     type t = unit
+
+    type typ =
+      | Off
+      | Manual
+      | Auto
+
+    let typ_to_string = function
+      | Off -> "off"
+      | Manual -> "manual"
+      | Auto -> "auto"
+
+    let typ_of_string = function
+      | "off" -> Off
+      | "manual" -> Manual
+      | "auto" -> Auto
+      | s -> invalid_arg ("WLANThermo.Pitmaster.typ_of_string: " ^ s)
+
+    type pitmaster =
+      { id : int;
+        channel : int;
+        pid : int;
+        value : int;
+        set : float;
+        typ : typ;
+        typ_last : typ;
+        set_color : Color.t;
+        value_color : Color.t }
+
     let of_json _ = ()
     let to_json _ =
       failwith "WLANThermo.Pitmaster.to_json: not implemented yet"
 
   end
+
 
 module Data =
   struct
@@ -401,6 +436,7 @@ module Data =
 
   end
 
+
 module Info =
   struct
 
@@ -427,6 +463,10 @@ let data = Data.get_json
 let info = Info.get
 let settings = Settings.get_json
 
+
+let pitmaster options =
+  let open Yojson.Basic.Util in
+  ThoCurl.get_json options "data" |> member "pitmaster" |> Pitmaster.of_json
 
 let format_battery options =
   let system = ThoCurl.get_json options "data" |> Data.system_of_json in

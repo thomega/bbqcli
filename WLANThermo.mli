@@ -5,6 +5,7 @@ type switch = On | Off
 val data : ThoCurl.options -> Yojson.Basic.t
 val info : ThoCurl.options -> string
 val settings : ThoCurl.options -> Yojson.Basic.t
+val pitmaster : ThoCurl.options -> unit
 
 val format_battery : ThoCurl.options -> string
 
