@@ -5,12 +5,13 @@ module type Alarm =
     type t
     val none : t
     val push : t
-    val buzzer : t
+    val beep : t
     val all : t
     val to_int : t -> int
     val of_int : int -> t
     val is_on : t -> t -> bool
     val switch_on : t -> t -> t
+    val switch_off : t -> t -> t
     val format : t -> string
   end
 
@@ -20,8 +21,8 @@ module Alarm : Alarm =
     type t = int
     let none = 0
     let push = 1
-    let buzzer = 2
-    let all = push lor buzzer
+    let beep = 2
+    let all = push lor beep
 
     let to_int a = a
 
@@ -42,7 +43,7 @@ module Alarm : Alarm =
 
     (* A bit artificial, but always 4 characters. *)
     let format a =
-      match is_on push a, is_on buzzer a with
+      match is_on push a, is_on beep a with
       | false, false -> "none"
       | true, false -> "push"
       | false, true -> "buzz"
@@ -274,15 +275,15 @@ module Channel : Channel =
         (* at the moment it's always 0 for channel 1-8 and 15 for channel 9 *)
         mod_t_min : float option;
         mod_t_max : float option;
-        mod_alarm : Alarm.t option;
+        mod_alarm : Alarm.t;
         mod_color : Color.t option }
 
-    let unchanged ch =
-      { mod_number = ch;
+    let unchanged channel =
+      { mod_number = channel.number;
         mod_name = None;
         mod_t_min = None;
         mod_t_max = None;
-        mod_alarm = None;
+        mod_alarm = channel.alarm;
         mod_color = None }
 
     let int_to_json name n = [ name, `Int n ]
@@ -306,7 +307,7 @@ module Channel : Channel =
                @ string_option_to_json "name" ch.mod_name
                @ float_option_to_json "min" ch.mod_t_min
                @ float_option_to_json "max" ch.mod_t_max
-               @ alarm_option_to_json "alarm" ch.mod_alarm
+               @ alarm_to_json "alarm" ch.mod_alarm
                @ color_option_to_json "color" ch.mod_color )
 
     let apply_range_opt range_opt mod_channel =
@@ -314,20 +315,20 @@ module Channel : Channel =
       | None -> mod_channel
       | Some (min, max) -> { mod_channel with mod_t_min = Some min; mod_t_max = Some max }
 
-    let apply_push_opt push_opt mod_channel =
-      match push_opt with
-      | None -> mod_channel
-      | Some On -> failwith "apply_push_opt"
-      | Some Off -> failwith "apply_push_opt"
+    let apply_alarm alarm ch = function
+      | On -> { ch with mod_alarm = Alarm.switch_on alarm ch.mod_alarm }
+      | Off -> { ch with mod_alarm = Alarm.switch_off alarm ch.mod_alarm }
 
-    let apply_beep_opt beep_opt mod_channel =
-      match beep_opt with
-      | None -> mod_channel
-      | Some On -> failwith "apply_beep_opt"
-      | Some Off -> failwith "apply_beep_opt"
+    let apply_push_opt push ch =
+      match push with
+      | None -> ch
+      | Some on_off -> apply_alarm Alarm.push ch on_off
 
-    (* "PATCH" doesn't appear to work, but "POST" works even with
-       incomplete records. *)
+    let apply_beep_opt beep ch =
+      match beep with
+      | None -> ch
+      | Some on_off -> apply_alarm Alarm.beep ch on_off
+
     let update options ?(all=false) ch range_opt push_opt beep_opt available =
       ignore (push_opt);
       ignore (beep_opt);
@@ -335,7 +336,12 @@ module Channel : Channel =
       | None -> ()
       | Some channel ->
          if all || is_active channel then
-           let command = unchanged ch |> apply_range_opt range_opt |> mod_to_json in
+           let command =
+             unchanged channel
+             |> apply_range_opt range_opt
+             |> apply_push_opt push_opt
+             |> apply_beep_opt beep_opt
+             |> mod_to_json in
            let open Yojson.Basic.Util in
            match ThoCurl.post_json options "setchannels" command with
            | `Bool true -> ()
