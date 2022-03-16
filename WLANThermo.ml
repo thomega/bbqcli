@@ -327,13 +327,14 @@ module Channel : Channel =
          failwith ("unexpected: " ^ Yojson.Basic.to_string response)
 
     let set common channels temperature_range _push _beep =
-      Printf.printf
+      Printf.eprintf
         "alarm of channel(s) %s on %s://%s set to range %s:\n"
         (String.concat "," (List.map string_of_int channels))
         (if common.ThoCurl.ssl then "https" else "http") common.ThoCurl.host
         (match temperature_range with
          | None -> "?"
          | Some (t1, t2) -> "[" ^ string_of_float t1 ^ "," ^ string_of_float t2 ^ "]");
+      flush stderr;
       match temperature_range with
       | None -> ()
       | Some r ->
@@ -388,17 +389,14 @@ module Data =
 
   end
 
-let print_temperatures options =
-  let channels = ThoCurl.get_json options "data" |> Data.channels_of_json in
-  List.iter
-    (fun ch -> Channel.format ch |> print_endline)
-    channels
+let format_temperatures options =
+  ThoCurl.get_json options "data" |> Data.channels_of_json |> List.map Channel.format
 
-let print_temperature options n =
+let format_temperature options n =
   let channels = ThoCurl.get_json options "data" |> Data.channels_of_json in
   begin match List.find_opt (fun ch -> ch.Channel.number = n) channels with
-  | None -> Printf.printf "channel #%d: disconnected\n" n
-  | Some ch -> Channel.format ch |> print_endline
+  | None -> Printf.sprintf "channel #%d: unavailable\n" n
+  | Some ch -> Channel.format ch
   end
 
 let info options =

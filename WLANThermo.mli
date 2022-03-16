@@ -64,6 +64,6 @@ val data : ThoCurl.options -> Yojson.Basic.t
 val settings : ThoCurl.options -> Yojson.Basic.t
 val format_battery : ThoCurl.options -> string
 
-val print_temperature : ThoCurl.options -> int -> unit
-val print_temperatures : ThoCurl.options -> unit
+val format_temperature : ThoCurl.options -> int -> string
+val format_temperatures : ThoCurl.options -> string list
 

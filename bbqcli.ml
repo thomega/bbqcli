@@ -161,8 +161,9 @@ module Temperature : Unit_Cmd =
         "temperature of channel(s) %s\n"
         (String.concat "," (List.map string_of_int channels));
       match channels with
-      | [] -> WLANThermo.print_temperatures common
-      | ch_list -> List.iter (WLANThermo.print_temperature common) ch_list
+      | [] -> WLANThermo.format_temperatures common |> List.iter print_endline
+      | ch_list ->
+         ch_list |> List.map (WLANThermo.format_temperature common) |> List.iter print_endline
 
     let term =
       let open Term in
