@@ -1,10 +1,7 @@
 (* WLANThermo.ml -- WLANThermo API *)
 
-(* val temperatures : Yojson.Basic.t -> (int * float) list
-   val temperature_opt : Yojson.Basic.t -> int -> float option
- *)
-val print_temperature : ?ssl:bool -> host:string -> int -> unit
-val print_temperatures : ?ssl:bool -> host:string -> unit -> unit
-val print_battery : ?ssl:bool -> host:string -> unit -> unit
+val print_temperature : ThoCurl.options -> int -> unit
+val print_temperatures : ThoCurl.options -> unit -> unit
+val print_battery : ThoCurl.options -> unit -> unit
 
-val set_channel_range : ?ssl:bool -> host:string -> int -> (float * float) -> unit
+val set_channel_range : ThoCurl.options -> int -> (float * float) -> unit

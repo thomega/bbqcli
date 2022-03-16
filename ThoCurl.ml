@@ -1,5 +1,9 @@
 (* ThoCurl.ml -- simple interface to curl(1) *)
 
+type options =
+  { ssl : bool;
+    host : string }
+
 let timeout = 10 (* seconds *)
 
 exception Invalid_JSON of string * string
@@ -10,25 +14,25 @@ let string_to_json s =
   with
   | Yojson.Json_error msg -> raise (Invalid_JSON (msg, s))
 
-let url_of_path ?(ssl=false) ~host path =
+let url_of_path options path =
   let protocol =
-    if ssl then
+    if options.ssl then
       "https"
     else
       "http" in
-  protocol ^ "://" ^ host ^ "/" ^ path
+  protocol ^ "://" ^ options.host ^ "/" ^ path
 
 let fill_buffer buffer data =
   Buffer.add_string buffer data;
   String.length data
 
-let do_curl ?ssl ~host path extra_setup =
+let do_curl options path extra_setup =
   let result = Buffer.create 16384
   and error_response = ref "" in
   Curl.global_init Curl.CURLINIT_GLOBALALL;
   begin try
       let curl = Curl.init () in
-      Curl.set_url curl (url_of_path ?ssl ~host path);
+      Curl.set_url curl (url_of_path options path);
       Curl.set_timeout curl timeout;
       Curl.set_errorbuffer curl error_response;
       Curl.set_writefunction curl (fill_buffer result);
@@ -48,11 +52,11 @@ let do_curl ?ssl ~host path extra_setup =
 
 let no_extras _ = ()
 
-let get ?ssl ~host path =
-  do_curl ?ssl ~host path no_extras
+let get options path =
+  do_curl options path no_extras
 
-let get_json ?ssl ~host path =
-  get ?ssl ~host path |> string_to_json
+let get_json options path =
+  get options path |> string_to_json
 
 type content =
   | JSON
@@ -71,8 +75,8 @@ let setup_post ?content data =
     end;
     Curl.set_postfields curl data)
      
-let post ?ssl ~host path ?content data =
-  do_curl ?ssl ~host path (setup_post ?content data)
+let post options path ?content data =
+  do_curl options path (setup_post ?content data)
 
-let post_json ?ssl ~host path data =
-  post ?ssl ~host path ~content:JSON (Yojson.Basic.to_string data) |> string_to_json
+let post_json options path data =
+  post options path ~content:JSON (Yojson.Basic.to_string data) |> string_to_json

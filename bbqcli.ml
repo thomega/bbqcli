@@ -40,13 +40,9 @@ let host_arg =
   & opt string host_default
   & info ["H"; "host"] ~docv:"HOST" ~doc ~env
 
-type common_options =
-  { ssl : bool;
-    host : string }
-
 let common_options_term =
   let open Term in
-  const (fun ssl host -> { ssl; host })
+  const (fun ssl host -> { ThoCurl.ssl; ThoCurl.host })
   $ ssl_arg
   $ host_arg
 
@@ -148,21 +144,19 @@ module type Unit_Cmd =
 module Temperature : Unit_Cmd =
   struct
 
-    let print_temperatures ssl host channels =
+    let print_temperatures common channels =
       Printf.printf
         "temperature of channel(s) %s\n"
         (String.concat "," (List.map string_of_int channels));
       match channels with
-      | [] -> WLANThermo.print_temperatures ~ssl ~host ()
-      | ch_list -> List.iter (WLANThermo.print_temperature ~ssl ~host) ch_list
+      | [] -> WLANThermo.print_temperatures common ()
+      | ch_list -> List.iter (WLANThermo.print_temperature common) ch_list
 
     let term =
       let open Term in
       const
         (fun common channels ->
-          let ssl = common.ssl
-          and host = common.host in
-          print_temperatures ssl host channels)
+          print_temperatures common channels)
       $ common_options_term
       $ channels_term
 
@@ -175,11 +169,11 @@ end
 module Alarm : Unit_Cmd =
   struct
 
-    let set_alarms ssl host channels temperature_range push beep =
+    let set_alarms common channels temperature_range push beep =
       Printf.printf
         "alarm of channel(s) %s on %s://%s set to range %s:%s%s\n"
         (String.concat "," (List.map string_of_int channels))
-        (if ssl then "https" else "http") host
+        (if common.ThoCurl.ssl then "https" else "http") common.ThoCurl.host
         (match temperature_range with
          | None -> "?"
          | Some (t1, t2) -> "[" ^ string_of_float t1 ^ "," ^ string_of_float t2 ^ "]")
@@ -193,7 +187,7 @@ module Alarm : Unit_Cmd =
        | None -> ()
        | Some r ->
           List.iter
-            (fun ch -> WLANThermo.set_channel_range ~ssl ~host ch r)
+            (fun ch -> WLANThermo.set_channel_range common ch r)
             channels)
 
     (* (float * float) option *)
@@ -222,9 +216,7 @@ module Alarm : Unit_Cmd =
       let open Term in
       const
         (fun common channels temperature_range push beep ->
-          let ssl = common.ssl
-          and host = common.host in
-          set_alarms ssl host channels temperature_range push beep)
+          set_alarms common channels temperature_range push beep)
       $ common_options_term
       $ channels_term
       $ temperature_range_arg
@@ -248,9 +240,7 @@ module Info : Unit_Cmd =
       let open Term in
       const
         (fun common ->
-          let ssl = common.ssl
-          and host = common.host in
-          ThoCurl.get ~ssl ~host "info" |> print_endline)
+          ThoCurl.get common "info" |> print_endline)
       $ common_options_term
 
     let cmd =
@@ -266,9 +256,7 @@ module Data : Unit_Cmd =
       let open Term in
       const
         (fun common ->
-          let ssl = common.ssl
-          and host = common.host in
-          ThoCurl.get_json ~ssl ~host "data" |> print_json)
+          ThoCurl.get_json common "data" |> print_json)
       $ common_options_term
 
     let cmd =
@@ -284,9 +272,7 @@ module Settings : Unit_Cmd =
       let open Term in
       const
         (fun common ->
-          let ssl = common.ssl
-          and host = common.host in
-          ThoCurl.get_json ~ssl ~host "settings" |> print_json)
+          ThoCurl.get_json common "settings" |> print_json)
       $ common_options_term
 
     let cmd =
@@ -301,9 +287,7 @@ module Battery : Unit_Cmd =
       let open Term in
       const
         (fun common ->
-          let ssl = common.ssl
-          and host = common.host in
-          WLANThermo.print_battery ~ssl ~host ())
+          WLANThermo.print_battery common ())
       $ common_options_term
 
     let cmd =

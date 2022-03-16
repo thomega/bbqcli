@@ -358,21 +358,21 @@ module Data =
 
 open ThoCurl
 
-let print_battery ?ssl ~host () =
-  let system = get_json ?ssl ~host "data" |> Data.system_of_json in
+let print_battery options () =
+  let system = get_json options "data" |> Data.system_of_json in
   printf
     "battery %3d%% %s\n"
     system.charge
     (if system.charging then "(charging)" else "(not charging)")
 
-let print_temperatures ?ssl ~host () =
-  let channels = get_json ?ssl ~host "data" |> Data.channels_of_json in
+let print_temperatures options () =
+  let channels = get_json options "data" |> Data.channels_of_json in
   List.iter
     (fun ch -> Channel.format ch |> print_endline)
     channels
 
-let print_temperature ?ssl ~host n =
-  let channels = get_json ?ssl ~host "data" |> Data.channels_of_json in
+let print_temperature options n =
+  let channels = get_json options "data" |> Data.channels_of_json in
   begin match List.find_opt (fun ch -> ch.Channel.number = n) channels with
   | None -> printf "channel #%d: disconnected\n" n
   | Some ch -> Channel.format ch |> print_endline
@@ -381,10 +381,10 @@ let print_temperature ?ssl ~host n =
 (* "PATCH" doesn't appear to work, but "POST" works even with
    incomplete records. *)
 
-let set_channel_range ?ssl ~host ch (min, max) =
+let set_channel_range options ch (min, max) =
   let command = Channel.min_max ch min max in
   let open Yojson.Basic.Util in
-  match post_json ?ssl ~host "setchannels" command with
+  match post_json options "setchannels" command with
   | `Bool true -> ()
   | `Bool false -> failwith "response: false"
   | response ->
