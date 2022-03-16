@@ -68,6 +68,7 @@ val format_battery : ThoCurl.options -> string
 val format_temperature : ThoCurl.options -> int -> string
 val format_temperatures : ?all:bool -> ThoCurl.options -> string list
 
-val update_channel :
-  ThoCurl.options -> ?all:bool -> int list ->
-  (float * float) option -> switch option -> switch option -> unit
+val update_channels :
+  ThoCurl.options -> ?all:bool ->
+  (float * float) option -> switch option -> switch option ->
+  int list -> unit

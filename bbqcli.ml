@@ -197,21 +197,21 @@ module Alarm : Unit_Cmd =
   struct
 
     (* (float * float) option *)
-    let temperature_range_arg =
+    let range_arg =
       let doc = "Select the temperature range $(docv)." in
       let open Arg in
       value
       & opt (some (pair ~sep:'-' float float)) None
       & info ["t"; "temperature"; "temp"] ~docv:"FROM-TO" ~doc
 
-    let push_alarm_arg =
+    let push_arg =
       let doc = "Switch the push alarm on/off." in
       let open Arg in
       value
       & opt (some switch) ~vopt:(Some WLANThermo.On) None
       & info ["p"; "push"] ~docv:switch_docv ~doc
 
-    let beep_alarm_arg =
+    let beep_arg =
       let doc = "Switch the beep alarm on/off." in
       let open Arg in
       value
@@ -221,14 +221,14 @@ module Alarm : Unit_Cmd =
     let term =
       let open Term in
       const
-        (fun common all channels temperature_range push beep ->
-          WLANThermo.update_channel ~all common channels temperature_range push beep)
+        (fun common all channels range push beep ->
+          WLANThermo.update_channels common ~all range push beep channels)
       $ Common.term
       $ all_arg
       $ Channels.term
-      $ temperature_range_arg
-      $ push_alarm_arg
-      $ beep_alarm_arg
+      $ range_arg
+      $ push_arg
+      $ beep_arg
 
     let cmd =
       let man = [

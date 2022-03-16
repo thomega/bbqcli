@@ -208,7 +208,9 @@ module type Channel =
     val member : int -> t list -> bool
     val find_opt : int -> t list -> t option
     val format : t -> string
-    val update : ThoCurl.options -> ?all:bool -> int -> float * float -> t list -> unit
+    val update :
+      ThoCurl.options -> ?all:bool -> int -> (float * float) option ->
+      switch option -> switch option -> t list -> unit
   end
 
 module Channel : Channel =
@@ -319,17 +321,20 @@ module Channel : Channel =
       let channel = unchanged ch in
       mod_to_json { channel with mod_t_max = Some max }
 
-    let diff _ch_old _ch_new =
-      ()
+    let apply_range ch = function
+      | None -> mod_to_json (unchanged ch)
+      | Some (min, max) -> min_max ch min max
 
     (* "PATCH" doesn't appear to work, but "POST" works even with
        incomplete records. *)
-    let update options ?(all=false) ch (min, max) channels =
-      match find_opt ch channels with
+    let update options ?(all=false) ch range_opt push beep available =
+      ignore (push);
+      ignore (beep);
+      match find_opt ch available with
       | None -> ()
       | Some channel ->
          if all || is_active channel then
-           let command = min_max ch min max in
+           let command = apply_range ch range_opt in
            let open Yojson.Basic.Util in
            match ThoCurl.post_json options "setchannels" command with
            | `Bool true -> ()
@@ -384,6 +389,9 @@ module Data =
     let only_active data =
       { data with channels = List.filter Channel.is_active data.channels }
 
+    let get_json options =
+      ThoCurl.get_json options "data"
+
   end
 
 let format_temperatures ?(all=false) options =
@@ -406,7 +414,7 @@ let info options =
   ThoCurl.get options "info"
 
 let data options =
-  ThoCurl.get_json options "data"
+  Data.get_json options
 
 let settings options =
   ThoCurl.get_json options "settings"
@@ -418,12 +426,12 @@ let format_battery options =
     system.charge
     (if system.charging then "(charging)" else "(not charging)")
 
-let update_channel common ?all channels temperature_range _push _beep =
-  match temperature_range with
-  | None -> ()
-  | Some r ->
-     let available = data common |> Data.channels_of_json in
+let update_channels common ?all range_opt push beep channels =
+  let available = data common |> Data.channels_of_json in
+  match channels with
+  | [] -> ()
+  | channels ->
      List.iter
-       (fun ch -> Channel.update common ?all ch r available)
+       (fun ch -> Channel.update common ?all ch range_opt push beep available)
        channels
 
