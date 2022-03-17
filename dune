@@ -14,7 +14,7 @@
 
 (library
   (name WLANThermo)
-  (modules WLANThermo ThoCurl)
+  (modules Common WLANThermo ThoCurl)
   (wrapped false)
   (flags (:standard -w -K))
   (ocamlopt_flags (:standard -inline 32))
