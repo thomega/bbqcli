@@ -213,7 +213,7 @@ module type Channel =
     val is_active : t -> bool
     val member : int -> t list -> bool
     val find_opt : t list -> int -> t option
-    val format : t -> string list
+    val format : 'a -> t -> string list
     val format_header : string list
     val format_unavailable : int -> string list
     val update :
@@ -275,7 +275,8 @@ module Channel : Channel =
         "Probe" ]
 
     (* TODO: translate probe type to string using "sensors" in /settings *)
-    let format ch =
+    let format probes ch =
+      ignore probes;
       let open Printf in
       List.concat
         [ [ sprintf "%3d" ch.number;
@@ -553,6 +554,7 @@ module Settings =
 
     type t = Yojson.Basic.t
 
+    (* This must be moved BEFORE Channel! *)
     type probe =
       { typ : int;
         name : string;
@@ -569,7 +571,7 @@ module Settings =
 
     let probes_of_json settings =
       let open Yojson.Basic.Util in
-      settings |> member "pm" |> to_list |> List.map probe_of_json
+      settings |> member "sensors" |> to_list |> List.map probe_of_json
 
     let probe_name_opt probes n =
       List.find_opt (fun p -> p.typ = n) probes
@@ -596,25 +598,27 @@ let format_battery options =
     system.charge
     (if system.charging then "(charging)" else "(not charging)")
 
-let format_all_channels ?(all=false) available =
+let format_all_channels ?(all=false) probes available =
   let channels =
     if all then
       available
     else
       List.filter Channel.is_active available in
-  List.map Channel.format channels
+  List.map (Channel.format probes) channels
 
-let format_channel available ch =
+let format_channel probes available ch =
   match Channel.find_opt available ch with
   | None -> Channel.format_unavailable ch
-  | Some channel -> Channel.format channel
+  | Some channel -> (Channel.format probes) channel
 
 let format_channels ?(all=false) options channels =
-  let available = data options |> Data.channels_of_json in
+  let available = data options |> Data.channels_of_json
+  and probes = settings options |> Settings.probes_of_json in
+  ignore probes;
   let unaligned =
     match channels with
-    | [] -> format_all_channels ~all available
-    | ch_list -> List.map (format_channel available) ch_list in
+    | [] -> format_all_channels ~all probes available
+    | ch_list -> List.map (format_channel probes available) ch_list in
   ThoString.align_string_lists " " (Channel.format_header :: unaligned)
 
 let update_channels common ?all ?range ?min ?max ?push ?beep channels =
