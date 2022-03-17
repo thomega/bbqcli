@@ -217,7 +217,8 @@ module type Channel =
     val format_header : string list
     val format_unavailable : int -> string list
     val update :
-      ThoCurl.options -> ?all:bool -> ?range:(float * float) ->
+      ThoCurl.options -> ?all:bool ->
+      ?range:(float * float) -> ?min:float -> ?max:float ->
       ?push:switch -> ?beep:switch -> t list -> int -> unit
   end
 
@@ -346,6 +347,32 @@ module Channel : Channel =
              mod_channel
            end
 
+    let apply_min current ?min mod_channel =
+      match min with
+      | None -> mod_channel
+      | Some min ->
+         if min <= current.t_max then
+           { mod_channel with mod_t_min = Some min }
+         else begin
+             Printf.eprintf
+               "ignoring request for inverted limits (%.1f > %.1f) in channel %d!\n"
+               min current.t_max mod_channel.mod_number;
+             mod_channel
+           end
+
+    let apply_max current ?max mod_channel =
+      match max with
+      | None -> mod_channel
+      | Some max ->
+         if current.t_min <= max then
+           { mod_channel with mod_t_max = Some max }
+         else begin
+             Printf.eprintf
+               "ignoring request for inverted limits (%.1f > %.1f) in channel %d!\n"
+               current.t_min max mod_channel.mod_number;
+             mod_channel
+           end
+
     let apply_alarm alarm ch = function
       | On -> { ch with mod_alarm = Alarm.switch_on alarm ch.mod_alarm }
       | Off -> { ch with mod_alarm = Alarm.switch_off alarm ch.mod_alarm }
@@ -360,7 +387,7 @@ module Channel : Channel =
       | None -> ch
       | Some on_off -> apply_alarm Alarm.beep ch on_off
 
-    let update options ?(all=false) ?range ?push ?beep available ch =
+    let update options ?(all=false) ?range ?min ?max ?push ?beep available ch =
       match find_opt ch available with
       | None -> ()
       | Some channel ->
@@ -368,6 +395,8 @@ module Channel : Channel =
            let command =
              unchanged channel
              |> apply_range ?range
+             |> apply_min channel ?min
+             |> apply_max channel ?max
              |> apply_push ?push
              |> apply_beep ?beep
              |> mod_to_json in
@@ -549,11 +578,11 @@ let format_channels ?(all=false) options channels =
     | ch_list -> List.map (format_channel available) ch_list in
   ThoString.align_string_lists " " (Channel.format_header :: unaligned)
 
-let update_channels common ?all ?range ?push ?beep channels =
+let update_channels common ?all ?range ?min ?max ?push ?beep channels =
   let available = data common |> Data.channels_of_json in
   let all_channels =
     match channels with
     | [] -> List.map (fun ch -> ch.Channel.number) available
     | ch_list -> ch_list in
-  List.iter (Channel.update common ?all ?range ?push ?beep available) all_channels
+  List.iter (Channel.update common ?all ?range ?min ?max ?push ?beep available) all_channels
 

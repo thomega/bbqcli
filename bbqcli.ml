@@ -84,8 +84,29 @@ module Alarm : Unit_Cmd =
       let open Arg in
       value
       & opt (some (pair ~sep:'-' float float)) None
-      & info ["t"; "temperature"; "temp"] ~docv:"FROM-TO" ~doc
+      & info ["t"; "temperature"; "temp"] ~docv:"MIN-MAX" ~doc
 
+    (* float option *)
+    let min_arg =
+      let doc = "Select the lower temperature limit $(docv).  \
+                 This takes precedence over the lower limit of a \
+                 range specified in --temperature." in
+      let open Arg in
+      value
+      & opt (some float) None
+      & info ["m"; "min"] ~docv:"MIN" ~doc
+
+    (* float option *)
+    let max_arg =
+      let doc = "Select the upper temperature limit $(docv).  \
+                 This takes precedence over upper limit of a \
+                 range specified in --temperature." in
+      let open Arg in
+      value
+      & opt (some float) None
+      & info ["M"; "max"] ~docv:"MAX" ~doc
+
+    (* WT.switch option *)
     let push_arg =
       let doc = "Switch the push alarm on/off." in
       let open Arg in
@@ -93,6 +114,7 @@ module Alarm : Unit_Cmd =
       & opt (some switch) ~vopt:(Some WT.On) None
       & info ["p"; "push"] ~docv:switch_docv ~doc
 
+    (* WT.switch option *)
     let beep_arg =
       let doc = "Switch the beep alarm on/off." in
       let open Arg in
@@ -103,12 +125,14 @@ module Alarm : Unit_Cmd =
     let term =
       let open Term in
       const
-        (fun common all channels range push beep ->
-          WT.update_channels common ~all ?range ?push ?beep channels)
+        (fun common all channels range min max push beep ->
+          WT.update_channels common ~all ?range ?min ?max ?push ?beep channels)
       $ Common.term
       $ all_arg
       $ Channels.term
       $ range_arg
+      $ min_arg
+      $ max_arg
       $ push_arg
       $ beep_arg
 
