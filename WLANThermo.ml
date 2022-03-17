@@ -274,16 +274,18 @@ module Channel : Channel =
 
     let format ch =
       let open Printf in
-      [ sprintf "%3d" ch.number;
-        "\"" ^ ch.name ^ "\"" ]
-      @ (match ch.t with
-         | Inactive -> ["inactive"; ""]
-         | Inverted (t, _) -> [sprintf "%5.1f deg" t; "inverted"]
-         | Too_low t ->  [sprintf "%5.1f deg" t; "below"]
-         | Too_high t -> [sprintf "%5.1f deg" t; "above"]
-         | In_range t -> [sprintf "%5.1f deg" t; "in"])
-      @ [ sprintf "[%5.1f,%5.1f]" ch.t_min ch.t_max;
-          Alarm.format ch.alarm ]
+      List.concat
+        [ [ sprintf "%3d" ch.number;
+            "\"" ^ ch.name ^ "\"" ];
+          begin match ch.t with
+          | Inactive -> ["inactive"; ""]
+          | Inverted (t, _) -> [sprintf "%5.1f deg" t; "inverted"]
+          | Too_low t ->  [sprintf "%5.1f deg" t; "below"]
+          | Too_high t -> [sprintf "%5.1f deg" t; "above"]
+          | In_range t -> [sprintf "%5.1f deg" t; "in"]
+          end;
+          [ sprintf "[%5.1f,%5.1f]" ch.t_min ch.t_max;
+            Alarm.format ch.alarm ] ]
 
     let format_unavailable ch =
       [ Printf.sprintf "%3d" ch; "[unavailable]" ]
@@ -323,12 +325,13 @@ module Channel : Channel =
     let color_option_to_json = option_to_json color_to_json
 
     let mod_to_json ch =
-      `Assoc ( int_to_json "number" ch.mod_number
-               @ string_option_to_json "name" ch.mod_name
-               @ float_option_to_json "min" ch.mod_t_min
-               @ float_option_to_json "max" ch.mod_t_max
-               @ alarm_to_json "alarm" ch.mod_alarm
-               @ color_option_to_json "color" ch.mod_color )
+      `Assoc (List.concat
+                [ int_to_json "number" ch.mod_number;
+                  string_option_to_json "name" ch.mod_name;
+                  float_option_to_json "min" ch.mod_t_min;
+                  float_option_to_json "max" ch.mod_t_max;
+                  alarm_to_json "alarm" ch.mod_alarm;
+                  color_option_to_json "color" ch.mod_color ])
 
     let apply_range_opt range_opt mod_channel =
       match range_opt with
