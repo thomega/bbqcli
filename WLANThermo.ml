@@ -271,8 +271,10 @@ module Channel : Channel =
         "Temperatur";
         "<>";
         "Range";
-        "Alarm"]
+        "Alarm";
+        "Probe" ]
 
+    (* TODO: translate probe type to string using "sensors" in /settings *)
     let format ch =
       let open Printf in
       List.concat
@@ -286,7 +288,8 @@ module Channel : Channel =
           | In_range t -> [sprintf "%5.1f deg" t; "in"]
           end;
           [ sprintf "[%5.1f,%5.1f]" ch.t_min ch.t_max;
-            Alarm.format ch.alarm ] ]
+            Alarm.format ch.alarm;
+            sprintf "%3d" ch.typ ] ]
 
     let format_unavailable ch =
       [ Printf.sprintf "%3d" ch; "[unavailable]" ]
@@ -411,8 +414,16 @@ module Channel : Channel =
 
   end
 
+module type Pitmaster =
+  sig
+    type pm
+    type t = pm list
+    val of_json : Yojson.Basic.t -> t
+    val format : pm -> string list
+    val format_header : string list
+  end
 
-module Pitmaster =
+module Pitmaster : Pitmaster =
   struct
 
     type mode =
@@ -460,10 +471,18 @@ module Pitmaster =
       | Manual -> Printf.sprintf "manual %2d%%" pm.value
       | Auto -> Printf.sprintf "target %3f deg" pm.target
 
+    let format_header =
+      [ "PM#";
+        "Mode";
+        "Channel";
+        "PID" ]
+
+    (* TODO: translate PID using "pid" in /settings *)
     let format pm =
-      Printf.sprintf
-        "%02d: %s refch=%2d PID %2d"
-        pm.id (format_mode pm) pm.channel pm.pid
+      [ Printf.sprintf "%2d" pm.id;
+        (format_mode pm);
+        Printf.sprintf "%2d" pm.channel;
+        Printf.sprintf "%2d" pm.pid ]
 
     (* We ignore the entry "type": [ "off", "manual", "auto" ],
        which never changes. *)
@@ -547,8 +566,10 @@ let settings = Settings.get_json
 
 let format_pitmasters options =
   let open Yojson.Basic.Util in
-  ThoCurl.get_json options "data" |> member "pitmaster"
-  |> Pitmaster.of_json |> List.map Pitmaster.format
+  let unaligned =
+    data options |> member "pitmaster"
+    |> Pitmaster.of_json |> List.map Pitmaster.format in
+  ThoString.align_string_lists " " (Pitmaster.format_header :: unaligned)
 
 let format_battery options =
   let system = ThoCurl.get_json options "data" |> Data.system_of_json in
