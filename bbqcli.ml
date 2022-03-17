@@ -191,7 +191,7 @@ module Pitmaster : Unit_Cmd =
       $ Common.term
 
     let cmd =
-      Cmd.v (Cmd.info "pittmaster" ~man) term
+      Cmd.v (Cmd.info "pitmaster" ~man) term
 
   end
 
