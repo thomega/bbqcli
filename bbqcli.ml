@@ -14,56 +14,6 @@ let all_arg =
   & opt bool ~vopt:true false
   & info ["a"; "all"] ~docv:"true/false" ~doc
 
-module type Utils =
-  sig
-    val merge_integer_ranges : int list list -> (int * int) list list -> int list
-  end
-
-module Utils : Utils =
-  struct
-
-    (* From ThoList: *)
-    let range ?(stride=1) n1 n2 =
-      if stride <= 0 then
-        invalid_arg "range: stride <= 0"
-      else
-        let rec range' n =
-          if n > n2 then
-            []
-          else
-            n :: range' (n + stride) in
-        range' n1
-
-    (* From ThoList: *)
-    let rec uniq' x = function
-      | [] -> []
-      | x' :: rest ->
-         if x' = x then
-           uniq' x rest
-         else
-           x' :: uniq' x' rest
-
-    let uniq = function
-      | [] -> []
-      | x :: rest -> x :: uniq' x rest
-
-    (* Asympototically inefficient, but we're dealing with short
-       lists here. *)
-    let compress l =
-      uniq (List.sort Stdlib.compare l)
-
-    let expand_range (i, j) =
-      range i j
-
-    let expand_ranges =
-      List.map expand_range
-
-    let merge_integer_ranges integer_lists ranges =
-      compress (List.concat (integer_lists @ expand_ranges (List.concat ranges)))
-
-  end
-
-
 module Channels : sig val term : int list Term.t end =
   struct
 
@@ -87,7 +37,7 @@ module Channels : sig val term : int list Term.t end =
       let open Term in
       const
         (fun channels channel_ranges ->
-          Utils.merge_integer_ranges channels channel_ranges)
+          ThoList.merge_integer_ranges channels channel_ranges)
       $ channels_arg
       $ channel_ranges_arg
 
