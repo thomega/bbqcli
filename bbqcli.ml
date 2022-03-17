@@ -104,7 +104,7 @@ module Alarm : Unit_Cmd =
       let open Term in
       const
         (fun common all channels range push beep ->
-          WT.update_channels common ~all range push beep channels)
+          WT.update_channels common ~all ?range ?push ?beep channels)
       $ Common.term
       $ all_arg
       $ Channels.term

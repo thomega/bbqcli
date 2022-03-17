@@ -216,8 +216,8 @@ module type Channel =
     val format_header : string list
     val format_unavailable : int -> string list
     val update :
-      ThoCurl.options -> ?all:bool -> (float * float) option ->
-      switch option -> switch option -> t list -> int -> unit
+      ThoCurl.options -> ?all:bool -> ?range:(float * float) ->
+      ?push:switch -> ?beep:switch -> t list -> int -> unit
   end
 
 module Channel : Channel =
@@ -347,16 +347,16 @@ module Channel : Channel =
       | None -> ch
       | Some on_off -> apply_alarm Alarm.beep ch on_off
 
-    let update options ?(all=false) range_opt push_opt beep_opt available ch =
+    let update options ?(all=false) ?range ?push ?beep available ch =
       match find_opt ch available with
       | None -> ()
       | Some channel ->
          if all || is_active channel then
            let command =
              unchanged channel
-             |> apply_range_opt range_opt
-             |> apply_push_opt push_opt
-             |> apply_beep_opt beep_opt
+             |> apply_range_opt range
+             |> apply_push_opt push
+             |> apply_beep_opt beep
              |> mod_to_json in
            let open Yojson.Basic.Util in
            match ThoCurl.post_json options "setchannels" command with
@@ -536,11 +536,11 @@ let format_channels ?(all=false) options channels =
     | ch_list -> List.map (format_channel available) ch_list in
   ThoString.align_string_lists " " (Channel.format_header :: unaligned)
 
-let update_channels common ?all range_opt push beep channels =
+let update_channels common ?all ?range ?push ?beep channels =
   let available = data common |> Data.channels_of_json in
   let all_channels =
     match channels with
     | [] -> List.map (fun ch -> ch.Channel.number) available
     | ch_list -> ch_list in
-  List.iter (Channel.update common ?all range_opt push beep available) all_channels
+  List.iter (Channel.update common ?all ?range ?push ?beep available) all_channels
 

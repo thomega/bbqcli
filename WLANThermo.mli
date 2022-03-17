@@ -13,5 +13,4 @@ val format_pitmasters : ThoCurl.options -> string list
 
 val update_channels :
   ThoCurl.options -> ?all:bool ->
-  (float * float) option -> switch option -> switch option ->
-  int list -> unit
+  ?range:(float * float) -> ?push:switch -> ?beep:switch -> int list -> unit
