@@ -160,6 +160,7 @@ module type Temperature =
       | Too_low of float
       | Too_high of float
       | In_range of float
+      | Inverted of float * (float * float)
     val of_float : float * float -> float -> t
   end
 
@@ -171,11 +172,11 @@ module Temperature : Temperature =
       | Too_low of float
       | Too_high of float
       | In_range of float
+      | Inverted of float * (float * float)
 
-    let of_float (t_min, t_max) t =
+    let of_float (t_min, t_max as t_range) t =
       if t_min > t_max then
-        invalid_arg
-          (Printf.sprintf "WLANThermo.Temperature: inverted range %g > %g" t_min t_max)
+        Inverted (t, t_range)
       else if t >= 999.0 then
         Inactive
       else if t < t_min then
@@ -239,7 +240,7 @@ module Channel : Channel =
       let open Temperature in
       match ch.t with
       | Inactive -> false
-      | Too_low _ | Too_high _ | In_range _ -> true
+      | Too_low _ | Too_high _ | In_range _ | Inverted _ -> true
 
     let member n channels =
       List.exists (fun ch -> ch.number = n) channels
@@ -277,6 +278,7 @@ module Channel : Channel =
         "\"" ^ ch.name ^ "\"" ]
       @ (match ch.t with
          | Inactive -> ["inactive"; ""]
+         | Inverted (t, _) -> [sprintf "%5.1f deg" t; "inverted"]
          | Too_low t ->  [sprintf "%5.1f deg" t; "below"]
          | Too_high t -> [sprintf "%5.1f deg" t; "above"]
          | In_range t -> [sprintf "%5.1f deg" t; "in"])
@@ -331,7 +333,15 @@ module Channel : Channel =
     let apply_range_opt range_opt mod_channel =
       match range_opt with
       | None -> mod_channel
-      | Some (min, max) -> { mod_channel with mod_t_min = Some min; mod_t_max = Some max }
+      | Some (min, max) ->
+         if min <= max then
+           { mod_channel with mod_t_min = Some min; mod_t_max = Some max }
+         else begin
+             Printf.eprintf
+               "ignoring request for inverted limits (%.1f > %.1f) in channel %d!\n"
+               min max mod_channel.mod_number;
+             mod_channel
+           end
 
     let apply_alarm alarm ch = function
       | On -> { ch with mod_alarm = Alarm.switch_on alarm ch.mod_alarm }
