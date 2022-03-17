@@ -168,11 +168,12 @@ module Alarm : Unit_Cmd =
       $ push_arg
       $ beep_arg
 
+    let man = [
+        `S Manpage.s_description;
+        `P "Change the temperature limits and associated alarms \
+            on a WT Mini V3 using the HTTP API." ] @ Common.man_footer
+
     let cmd =
-      let man = [
-          `S Manpage.s_description;
-          `P "Change the temperature limits and associated alarms \
-              on a WT Mini V3 using the HTTP API." ] @ Common.man_footer in
       Cmd.v (Cmd.info "alarm" ~man) term
 
   end
@@ -181,13 +182,19 @@ module Alarm : Unit_Cmd =
 module Info : Unit_Cmd =
   struct
 
+    let man = [
+        `S Manpage.s_description;
+        `P "Echo the unformatted response to \"/info\".  According to \
+            the developers, this is not meant to be parsed, but just as \
+            quick feedback." ] @ Common.man_footer
+
     let term =
       let open Term in
       const (fun common -> WT.info common |> print_endline)
       $ Common.term
 
     let cmd =
-      Cmd.v (Cmd.info "info") term
+      Cmd.v (Cmd.info "info" ~man) term
 
   end
 
@@ -195,13 +202,19 @@ module Info : Unit_Cmd =
 module Data : Unit_Cmd =
   struct
 
+    let man = [
+        `S Manpage.s_description;
+        `P "Echo the parsed and pretty printed JSON response to \"/data\". \
+            Currently, no processing is done.  This will change in the \
+            future." ] @ Common.man_footer
+
     let term =
       let open Term in
       const (fun common -> WT.data common |> print_json)
       $ Common.term
 
     let cmd =
-      Cmd.v (Cmd.info "data") term
+      Cmd.v (Cmd.info "data" ~man) term
 
   end
 
@@ -209,18 +222,29 @@ module Data : Unit_Cmd =
 module Settings : Unit_Cmd =
   struct
 
+    let man = [
+        `S Manpage.s_description;
+        `P "Echo the parsed and pretty printed JSON response to \"/settings\". \
+            Currently, no processing is done.  This will change in the \
+            future." ] @ Common.man_footer
+
     let term =
       let open Term in
       const (fun common -> WT.settings common |> print_json)
       $ Common.term
 
     let cmd =
-      Cmd.v (Cmd.info "settings") term
+      Cmd.v (Cmd.info "settings" ~man) term
+
   end
 
 
 module Battery : Unit_Cmd =
   struct
+
+    let man = [
+        `S Manpage.s_description;
+        `P "Print the current changing status." ] @ Common.man_footer
 
     let term =
       let open Term in
@@ -228,22 +252,32 @@ module Battery : Unit_Cmd =
       $ Common.term
 
     let cmd =
-      Cmd.v (Cmd.info "battery") term
+      Cmd.v (Cmd.info "battery" ~man) term
 
   end
 
 
-let main_cmd =
-  let open Manpage in
-  let man = [
-      `S s_description;
-      `P "Control a WLANThermo Mini V3 on the command line \
-          using the HTTP API.";
-      `S s_examples;
-      `Pre "bbqcli -c 9 -r 80-110 -p on"] @ Common.man_footer in
-  let info = Cmd.info "bbqcli" ~man in
-  Cmd.group info [Alarm.cmd; Temperature.cmd; Battery.cmd;
-                  Data.cmd; Settings.cmd; Info.cmd]
+module Main : Unit_Cmd =
+  struct
+
+    let man = [
+        `S Manpage.s_description;
+        `P "Control a WLANThermo Mini V3 on the command line \
+            using the HTTP API.";
+        `S Manpage.s_examples;
+        `Pre "bbqcli -c 9 -r 80-110 -p on"] @ Common.man_footer
+
+    let cmd =
+      Cmd.group
+        (Cmd.info "bbqcli" ~man)
+        [ Alarm.cmd;
+          Temperature.cmd;
+          Battery.cmd;
+          Data.cmd;
+          Settings.cmd;
+          Info.cmd ]
+
+  end
 
 let () =
-  exit (Cmd.eval main_cmd)
+  exit (Cmd.eval Main.cmd)
