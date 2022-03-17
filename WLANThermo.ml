@@ -362,31 +362,31 @@ module Channel : Channel =
 module Pitmaster =
   struct
 
-    type typ =
+    type mode =
       | Off
       | Manual
       | Auto
 
-    let typ_to_string = function
+    let mode_to_string = function
       | Off -> "off"
       | Manual -> "manual"
       | Auto -> "auto"
 
-    let typ_of_string = function
+    let mode_of_string = function
       | "off" -> Off
       | "manual" -> Manual
       | "auto" -> Auto
-      | s -> invalid_arg ("WLANThermo.Pitmaster.typ_of_string: " ^ s)
+      | s -> invalid_arg ("WLANThermo.Pitmaster.mode_of_string: " ^ s)
 
     type pm =
       { id : int;
         channel : int;
         pid : int;
         value : int;
-        set : float;
-        typ : typ;
-        typ_last : typ;
-        set_color : Color.t;
+        target : float;
+        mode : mode;
+        mode_last : mode;
+        target_color : Color.t;
         value_color : Color.t }
 
     let pm_of_json pm =
@@ -395,16 +395,22 @@ module Pitmaster =
         channel = pm |> member "channel" |> to_int;
         pid = pm |> member "pid" |> to_int;
         value = pm |> member "value" |> to_int;
-        set = pm |> member "set" |> to_float;
-        typ = pm |> member "typ" |> to_string |> typ_of_string;
-        typ_last = pm |> member "typ_last" |> to_string |> typ_of_string;
-        set_color = pm |> member "set_color" |> to_string |> Color.of_string;
+        target = pm |> member "set" |> to_float;
+        mode = pm |> member "typ" |> to_string |> mode_of_string;
+        mode_last = pm |> member "typ_last" |> to_string |> mode_of_string;
+        target_color = pm |> member "set_color" |> to_string |> Color.of_string;
         value_color = pm |> member "value_color" |> to_string |> Color.of_string }
+
+    let format_mode pm =
+      match pm.mode with
+      | Off -> "off"
+      | Manual -> Printf.sprintf "manual %2d%%" pm.value
+      | Auto -> Printf.sprintf "target %3f deg" pm.target
 
     let format pm =
       Printf.sprintf
-        "pitmaster %2d"
-        pm.id
+        "%02d: %s refch=%2d PID %2d"
+        pm.id (format_mode pm) pm.channel pm.pid
 
     (* We ignore the entry "type": [ "off", "manual", "auto" ],
        which never changes. *)
