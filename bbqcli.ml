@@ -178,6 +178,23 @@ module Alarm : Unit_Cmd =
 
   end
 
+module Pitmaster : Unit_Cmd =
+  struct
+
+    let man = [
+        `S Manpage.s_description;
+        `P "Print the pitmaster status." ] @ Common.man_footer
+
+    let term =
+      let open Term in
+      const (fun common -> WT.format_pitmasters common |> List.iter print_endline)
+      $ Common.term
+
+    let cmd =
+      Cmd.v (Cmd.info "pittmaster" ~man) term
+
+  end
+
 
 module Info : Unit_Cmd =
   struct
@@ -265,13 +282,19 @@ module Main : Unit_Cmd =
         `P "Control a WLANThermo Mini V3 on the command line \
             using the HTTP API.";
         `S Manpage.s_examples;
-        `Pre "bbqcli -c 9 -r 80-110 -p on"] @ Common.man_footer
+        `Pre "bbqcli alarm -c 9 -t 80-110 -p on";
+        `P "Sets the temperature range on channel 9 to [80,110] \
+            and switches on the push alert.";
+        `Pre "bbqcli temperature -a";
+        `P "List the temperatures and limits for all channels, \
+            including the limits of disconnected channels."] @ Common.man_footer
 
     let cmd =
       Cmd.group
         (Cmd.info "bbqcli" ~man)
-        [ Alarm.cmd;
-          Temperature.cmd;
+        [ Temperature.cmd;
+          Alarm.cmd;
+          Pitmaster.cmd;
           Battery.cmd;
           Data.cmd;
           Settings.cmd;

@@ -362,8 +362,6 @@ module Channel : Channel =
 module Pitmaster =
   struct
 
-    type t = unit
-
     type typ =
       | Off
       | Manual
@@ -380,7 +378,7 @@ module Pitmaster =
       | "auto" -> Auto
       | s -> invalid_arg ("WLANThermo.Pitmaster.typ_of_string: " ^ s)
 
-    type pitmaster =
+    type pm =
       { id : int;
         channel : int;
         pid : int;
@@ -391,7 +389,31 @@ module Pitmaster =
         set_color : Color.t;
         value_color : Color.t }
 
-    let of_json _ = ()
+    let pm_of_json pm =
+      let open Yojson.Basic.Util in
+      { id = pm |> member "id" |> to_int;
+        channel = pm |> member "channel" |> to_int;
+        pid = pm |> member "pid" |> to_int;
+        value = pm |> member "value" |> to_int;
+        set = pm |> member "set" |> to_float;
+        typ = pm |> member "typ" |> to_string |> typ_of_string;
+        typ_last = pm |> member "typ_last" |> to_string |> typ_of_string;
+        set_color = pm |> member "set_color" |> to_string |> Color.of_string;
+        value_color = pm |> member "value_color" |> to_string |> Color.of_string }
+
+    let format pm =
+      Printf.sprintf
+        "pitmaster %2d"
+        pm.id
+
+    (* We ignore the entry "type": [ "off", "manual", "auto" ],
+       which never changes. *)
+    type t = pm list
+
+    let of_json pitmaster =
+      let open Yojson.Basic.Util in
+      pitmaster |> member "pm" |> to_list |> List.map pm_of_json
+
     let to_json _ =
       failwith "WLANThermo.Pitmaster.to_json: not implemented yet"
 
@@ -464,9 +486,10 @@ let info = Info.get
 let settings = Settings.get_json
 
 
-let pitmaster options =
+let format_pitmasters options =
   let open Yojson.Basic.Util in
-  ThoCurl.get_json options "data" |> member "pitmaster" |> Pitmaster.of_json
+  ThoCurl.get_json options "data" |> member "pitmaster"
+  |> Pitmaster.of_json |> List.map Pitmaster.format
 
 let format_battery options =
   let system = ThoCurl.get_json options "data" |> Data.system_of_json in
