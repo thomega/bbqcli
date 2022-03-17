@@ -333,8 +333,8 @@ module Channel : Channel =
                   alarm_to_json "alarm" ch.mod_alarm;
                   color_option_to_json "color" ch.mod_color ])
 
-    let apply_range_opt range_opt mod_channel =
-      match range_opt with
+    let apply_range ?range mod_channel =
+      match range with
       | None -> mod_channel
       | Some (min, max) ->
          if min <= max then
@@ -350,12 +350,12 @@ module Channel : Channel =
       | On -> { ch with mod_alarm = Alarm.switch_on alarm ch.mod_alarm }
       | Off -> { ch with mod_alarm = Alarm.switch_off alarm ch.mod_alarm }
 
-    let apply_push_opt push ch =
+    let apply_push ?push ch =
       match push with
       | None -> ch
       | Some on_off -> apply_alarm Alarm.push ch on_off
 
-    let apply_beep_opt beep ch =
+    let apply_beep ?beep ch =
       match beep with
       | None -> ch
       | Some on_off -> apply_alarm Alarm.beep ch on_off
@@ -367,9 +367,9 @@ module Channel : Channel =
          if all || is_active channel then
            let command =
              unchanged channel
-             |> apply_range_opt range
-             |> apply_push_opt push
-             |> apply_beep_opt beep
+             |> apply_range ?range
+             |> apply_push ?push
+             |> apply_beep ?beep
              |> mod_to_json in
            let open Yojson.Basic.Util in
            match ThoCurl.post_json options "setchannels" command with
