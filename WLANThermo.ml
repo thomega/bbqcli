@@ -212,7 +212,7 @@ module type Channel =
     val of_json : Yojson.Basic.t -> t
     val is_active : t -> bool
     val member : int -> t list -> bool
-    val find_opt : int -> t list -> t option
+    val find_opt : t list -> int -> t option
     val format : t -> string list
     val format_header : string list
     val format_unavailable : int -> string list
@@ -228,14 +228,14 @@ module Channel : Channel =
     type t =
       { number : int;
         name : string;
-        typ: int;
+        typ: int (* see "sensors" in /settings/ *) ;
         t : Temperature.t;
         t_min : float;
         t_max : float;
         alarm : Alarm.t;
         color : Color.t;
-        fixed : bool;
-        connected : bool }
+        fixed : bool; (* probe type fixed by hardware *)
+        connected : bool (* wireless probe connection status *) }
 
     let is_active ch =
       let open Temperature in
@@ -246,7 +246,7 @@ module Channel : Channel =
     let member n channels =
       List.exists (fun ch -> ch.number = n) channels
 
-    let find_opt n channels =
+    let find_opt channels n =
       List.find_opt (fun ch -> ch.number = n) channels
 
     let of_json ch =
@@ -391,7 +391,7 @@ module Channel : Channel =
       | Some on_off -> apply_alarm Alarm.beep ch on_off
 
     let update options ?(all=false) ?range ?min ?max ?push ?beep available ch =
-      match find_opt ch available with
+      match find_opt available ch with
       | None -> ()
       | Some channel ->
          if all || is_active channel then
@@ -553,8 +553,26 @@ module Settings =
 
     type t = Yojson.Basic.t
 
+    type probe =
+      { typ : int;
+        name : string;
+        fixed : bool }
+
+    let probe_of_json probe =
+      let open Yojson.Basic.Util in
+      { typ = probe |> member "type" |> to_int;
+        name = probe |> member "name" |> to_string;
+        fixed = probe |> member "fixed" |> to_bool }
+        
     let get_json options =
       ThoCurl.get_json options "settings"
+
+    let probes_of_json settings =
+      let open Yojson.Basic.Util in
+      settings |> member "pm" |> to_list |> List.map probe_of_json
+
+    let probe_name_opt probes n =
+      List.find_opt (fun p -> p.typ = n) probes
 
   end
 
@@ -587,7 +605,7 @@ let format_all_channels ?(all=false) available =
   List.map Channel.format channels
 
 let format_channel available ch =
-  match Channel.find_opt ch available with
+  match Channel.find_opt available ch with
   | None -> Channel.format_unavailable ch
   | Some channel -> Channel.format channel
 
