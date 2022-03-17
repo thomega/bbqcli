@@ -56,10 +56,7 @@ module Temperature : Unit_Cmd =
       Printf.printf
         "temperature of channel(s) %s\n"
         (String.concat "," (List.map string_of_int channels));
-      match channels with
-      | [] -> WT.format_channels ?all common |> List.iter print_endline
-      | ch_list ->
-         ch_list |> List.map (WT.format_channel common) |> List.iter print_endline
+      WT.format_channels ?all common channels |> List.iter print_endline
 
     let term =
       let open Term in

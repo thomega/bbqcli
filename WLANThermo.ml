@@ -41,13 +41,12 @@ module Alarm : Alarm =
     let switch_off which a =
       a land (lnot which)
 
-    (* A bit artificial, but always 4 characters. *)
     let format a =
       match is_on push a, is_on beep a with
-      | false, false -> "none"
+      | false, false -> "off"
       | true,  false -> "push"
       | false, true  -> "beep"
-      | true,  true  -> "both"
+      | true,  true  -> "push+beep"
 
   end
 
@@ -213,7 +212,7 @@ module type Channel =
     val is_active : t -> bool
     val member : int -> t list -> bool
     val find_opt : int -> t list -> t option
-    val format : t -> string
+    val format : t -> string list
     val update :
       ThoCurl.options -> ?all:bool -> (float * float) option ->
       switch option -> switch option -> t list -> int -> unit
@@ -267,13 +266,13 @@ module Channel : Channel =
       let interval = sprintf "[%5.1f,%5.1f]" ch.t_min ch.t_max
       and temperature =
         match ch.t with
-        | Inactive ->           "inactive    "
-        | Too_low t ->  sprintf "%5.1f deg <<" t
-        | Too_high t -> sprintf "%5.1f deg >>" t
-        | In_range t -> sprintf "%5.1f deg in" t in
-      sprintf
-        "channel #%d: %s %s alarm=%s"
-        ch.number temperature interval (Alarm.format ch.alarm)
+        | Inactive -> ["inactive"; ""]
+        | Too_low t ->  [sprintf "%5.1f deg" t; "below"]
+        | Too_high t -> [sprintf "%5.1f deg" t; "above"]
+        | In_range t -> [sprintf "%5.1f deg" t; "in"] in
+      [ sprintf "channel #%d" ch.number; "("; ch.name; ")" ]
+      @ temperature
+      @ [ interval; Alarm.format ch.alarm ]
 
     type mod_t  =
       { mod_number : int;
@@ -504,7 +503,7 @@ let format_battery options =
     system.charge
     (if system.charging then "(charging)" else "(not charging)")
 
-let format_channels ?(all=false) options =
+let format_all_channels ?(all=false) options =
   let filter =
     if all then
       fun l -> l
@@ -516,9 +515,16 @@ let format_channels ?(all=false) options =
 let format_channel options ch =
   let channels = ThoCurl.get_json options "data" |> Data.channels_of_json in
   begin match Channel.find_opt ch channels with
-  | None -> Printf.sprintf "channel #%d: unavailable" ch
+  | None -> [ Printf.sprintf "channel #%d" ch; ""; "unavailable" ]
   | Some channel -> Channel.format channel
   end
+
+(* This is inefficient, because it queries the server multiple times! *)
+let format_channels ?(all=false) options channels =
+  begin match channels with
+  | [] -> format_all_channels ~all options
+  | ch_list -> ch_list |> List.map (format_channel options)
+  end |> ThoString.align_string_lists " "
 
 let update_channels common ?all range_opt push beep channels =
   let available = data common |> Data.channels_of_json in

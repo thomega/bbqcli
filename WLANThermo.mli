@@ -8,8 +8,7 @@ val settings : ThoCurl.options -> Yojson.Basic.t
 
 val format_battery : ThoCurl.options -> string
 
-val format_channel : ThoCurl.options -> int -> string
-val format_channels : ?all:bool -> ThoCurl.options -> string list
+val format_channels : ?all:bool -> ThoCurl.options -> int list -> string list
 val format_pitmasters : ThoCurl.options -> string list
 
 val update_channels :
