@@ -53,9 +53,6 @@ module Temperature : Unit_Cmd =
   struct
 
     let print_temperatures ?all common channels =
-      Printf.printf
-        "temperature of channel(s) %s\n"
-        (String.concat "," (List.map string_of_int channels));
       WT.format_channels ?all common channels |> List.iter print_endline
 
     let term =

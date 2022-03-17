@@ -213,6 +213,8 @@ module type Channel =
     val member : int -> t list -> bool
     val find_opt : int -> t list -> t option
     val format : t -> string list
+    val format_header : string list
+    val format_unavailable : int -> string list
     val update :
       ThoCurl.options -> ?all:bool -> (float * float) option ->
       switch option -> switch option -> t list -> int -> unit
@@ -261,18 +263,28 @@ module Channel : Channel =
         fixed = ch |> member "fixed" |> to_bool;
         connected = ch |> member "connected" |> to_bool }
 
+    let format_header =
+      [ "Ch#";
+        "Name";
+        "Temperatur";
+        "<>";
+        "Range";
+        "Alarm"]
+
     let format ch =
       let open Printf in
-      let interval = sprintf "[%5.1f,%5.1f]" ch.t_min ch.t_max
-      and temperature =
-        match ch.t with
-        | Inactive -> ["inactive"; ""]
-        | Too_low t ->  [sprintf "%5.1f deg" t; "below"]
-        | Too_high t -> [sprintf "%5.1f deg" t; "above"]
-        | In_range t -> [sprintf "%5.1f deg" t; "in"] in
-      [ sprintf "channel #%d" ch.number; "("; ch.name; ")" ]
-      @ temperature
-      @ [ interval; Alarm.format ch.alarm ]
+      [ sprintf "%3d" ch.number;
+        "\"" ^ ch.name ^ "\"" ]
+      @ (match ch.t with
+         | Inactive -> ["inactive"; ""]
+         | Too_low t ->  [sprintf "%5.1f deg" t; "below"]
+         | Too_high t -> [sprintf "%5.1f deg" t; "above"]
+         | In_range t -> [sprintf "%5.1f deg" t; "in"])
+      @ [ sprintf "[%5.1f,%5.1f]" ch.t_min ch.t_max;
+          Alarm.format ch.alarm ]
+
+    let format_unavailable ch =
+      [ Printf.sprintf "%3d" ch; "[unavailable]" ]
 
     type mod_t  =
       { mod_number : int;
@@ -503,28 +515,26 @@ let format_battery options =
     system.charge
     (if system.charging then "(charging)" else "(not charging)")
 
-let format_all_channels ?(all=false) options =
-  let filter =
+let format_all_channels ?(all=false) available =
+  let channels =
     if all then
-      fun l -> l
+      available
     else
-      List.filter Channel.is_active in
-  ThoCurl.get_json options "data" |>
-    Data.channels_of_json |> filter |> List.map Channel.format
+      List.filter Channel.is_active available in
+  List.map Channel.format channels
 
-let format_channel options ch =
-  let channels = ThoCurl.get_json options "data" |> Data.channels_of_json in
-  begin match Channel.find_opt ch channels with
-  | None -> [ Printf.sprintf "channel #%d" ch; ""; "unavailable" ]
+let format_channel available ch =
+  match Channel.find_opt ch available with
+  | None -> Channel.format_unavailable ch
   | Some channel -> Channel.format channel
-  end
 
-(* This is inefficient, because it queries the server multiple times! *)
 let format_channels ?(all=false) options channels =
-  begin match channels with
-  | [] -> format_all_channels ~all options
-  | ch_list -> ch_list |> List.map (format_channel options)
-  end |> ThoString.align_string_lists " "
+  let available = data options |> Data.channels_of_json in
+  let unaligned =
+    match channels with
+    | [] -> format_all_channels ~all available
+    | ch_list -> List.map (format_channel available) ch_list in
+  ThoString.align_string_lists " " (Channel.format_header :: unaligned)
 
 let update_channels common ?all range_opt push beep channels =
   let available = data common |> Data.channels_of_json in
