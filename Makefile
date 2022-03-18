@@ -1,12 +1,19 @@
 # Makefile -- dispatching to dune ...
 
-SAMPLE = ./bbqcli.exe
-SAMPLE = ./cli_test.exe
+PREFIX = $(HOME)
+
+SAMPLE = ./bbqcli.exe --help
 
 all:
 	dune build
 
-run:	all
+install:
+	dune install --prefix=$(PREFIX)
+
+uninstall:
+	-dune uninstall --prefix=$(PREFIX)
+
+run:
 	dune exec -- $(SAMPLE)
 
 test:
