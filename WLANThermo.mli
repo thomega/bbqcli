@@ -2,9 +2,9 @@
 
 type switch = On | Off
 
-val data : ThoCurl.options -> Yojson.Basic.t
-val info : ThoCurl.options -> string
-val settings : ThoCurl.options -> Yojson.Basic.t
+val get_data : ThoCurl.options -> Yojson.Basic.t
+val get_info : ThoCurl.options -> string
+val get_settings : ThoCurl.options -> Yojson.Basic.t
 
 val format_battery : ThoCurl.options -> string
 

@@ -175,7 +175,7 @@ module Info : Unit_Cmd =
 
     let term =
       let open Term in
-      const (fun common -> WT.info common |> print_endline)
+      const (fun common -> WT.get_info common |> print_endline)
       $ Common.term
 
     let cmd =
@@ -195,7 +195,7 @@ module Data : Unit_Cmd =
 
     let term =
       let open Term in
-      const (fun common -> WT.data common |> print_json)
+      const (fun common -> WT.get_data common |> print_json)
       $ Common.term
 
     let cmd =
@@ -215,7 +215,7 @@ module Settings : Unit_Cmd =
 
     let term =
       let open Term in
-      const (fun common -> WT.settings common |> print_json)
+      const (fun common -> WT.get_settings common |> print_json)
       $ Common.term
 
     let cmd =

@@ -281,7 +281,7 @@ module type Channel =
     val is_active : t -> bool
     val member : int -> t list -> bool
     val find_opt : t list -> int -> t option
-    val format : Sensor.t list -> t -> string list
+    val format : Settings.t -> t -> string list
     val format_header : string list
     val format_unavailable : int -> string list
     val update :
@@ -343,10 +343,10 @@ module Channel : Channel =
         "Sensor" ]
 
     (* TODO: translate sensor type to string using "sensors" in /settings *)
-    let format sensors ch =
+    let format settings ch =
       let open Printf in
       let sensor =
-        match Sensor.name_opt sensors ch.typ with
+        match Sensor.name_opt settings.Settings.sensors ch.typ with
         | None -> sprintf "?%3d" ch.typ
         | Some s -> s.name in
       List.concat
@@ -609,49 +609,49 @@ module Data =
   end
 
 
-let data = Data.get_json
-let info = Info.get
-let settings = Settings.get_json
+let get_data = Data.get_json
+let get_info = Info.get
+let get_settings = Settings.get_json
 
 
 let format_pitmasters options =
   let open Yojson.Basic.Util in
   let unaligned =
-    data options |> member "pitmaster"
+    get_data options |> member "pitmaster"
     |> Pitmaster.of_json |> List.map Pitmaster.format in
   ThoString.align_string_lists " " (Pitmaster.format_header :: unaligned)
 
 let format_battery options =
-  let system = ThoCurl.get_json options "data" |> Data.system_of_json in
+  let system = get_data options |> Data.system_of_json in
   Printf.sprintf
     "battery %3d%% %s"
     system.charge
     (if system.charging then "(charging)" else "(not charging)")
 
-let format_all_channels ?(all=false) sensors available =
+let format_all_channels ?(all=false) settings available =
   let channels =
     if all then
       available
     else
       List.filter Channel.is_active available in
-  List.map (Channel.format sensors) channels
+  List.map (Channel.format settings) channels
 
-let format_channel sensors available ch =
+let format_channel settings available ch =
   match Channel.find_opt available ch with
   | None -> Channel.format_unavailable ch
-  | Some channel -> (Channel.format sensors) channel
+  | Some channel -> (Channel.format settings) channel
 
 let format_channels ?(all=false) options channels =
-  let available = data options |> Data.channels_of_json
-  and sensors = settings options |> Settings.sensors_of_json in
+  let available = get_data options |> Data.channels_of_json
+  and settings = get_settings options |> Settings.of_json in
   let unaligned =
     match channels with
-    | [] -> format_all_channels ~all sensors available
-    | ch_list -> List.map (format_channel sensors available) ch_list in
+    | [] -> format_all_channels ~all settings available
+    | ch_list -> List.map (format_channel settings available) ch_list in
   ThoString.align_string_lists " " (Channel.format_header :: unaligned)
 
 let update_channels common ?all ?range ?min ?max ?push ?beep channels =
-  let available = data common |> Data.channels_of_json in
+  let available = get_data common |> Data.channels_of_json in
   let all_channels =
     match channels with
     | [] -> List.map (fun ch -> ch.Channel.number) available
