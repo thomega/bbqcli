@@ -1,5 +1,73 @@
 (* WLANThermo.ml -- WLANThermo API *)
 
+module Info =
+  struct
+
+    type t = string
+
+    let get options =
+      ThoCurl.get options "info"
+
+  end
+
+
+module Sensor =
+  struct
+
+    type t =
+      { typ : int;
+        name : string;
+        fixed : bool }
+
+    let of_json sensor =
+      let open Yojson.Basic.Util in
+      { typ = sensor |> member "type" |> to_int;
+        name = sensor |> member "name" |> to_string;
+        fixed = sensor |> member "fixed" |> to_bool }
+
+    let name_opt sensors n =
+      List.find_opt (fun p -> p.typ = n) sensors
+
+  end        
+
+
+module Settings =
+  struct
+
+    type t =
+      { device : unit; (* TODO! *)
+        system : unit; (* TODO! *)
+        hardware : unit; (* TODO! *)
+        api : unit; (* TODO! *)
+        sensors : Sensor.t list;
+        features : unit; (* TODO! *)
+        pid : unit; (* TODO! *)
+        aktor : unit; (* TODO! *)
+        display : unit; (* TODO! *)
+        iot : unit; (* TODO! *) }
+
+    let get_json options =
+      ThoCurl.get_json options "settings"
+
+    let sensors_of_json settings =
+      let open Yojson.Basic.Util in
+      settings |> member "sensors" |> to_list |> List.map Sensor.of_json
+
+    let of_json settings =
+      { device = (); (* TODO! *)
+        system = (); (* TODO! *)
+        hardware = (); (* TODO! *)
+        api = (); (* TODO! *)
+        sensors = sensors_of_json settings;
+        features = (); (* TODO! *)
+        pid = (); (* TODO! *)
+        aktor = (); (* TODO! *)
+        display = (); (* TODO! *)
+        iot = () (* TODO! *) }
+      
+  end
+
+
 module type Alarm =
   sig
     type t
@@ -213,7 +281,7 @@ module type Channel =
     val is_active : t -> bool
     val member : int -> t list -> bool
     val find_opt : t list -> int -> t option
-    val format : 'a -> t -> string list
+    val format : Sensor.t list -> t -> string list
     val format_header : string list
     val format_unavailable : int -> string list
     val update :
@@ -234,8 +302,8 @@ module Channel : Channel =
         t_max : float;
         alarm : Alarm.t;
         color : Color.t;
-        fixed : bool; (* probe type fixed by hardware *)
-        connected : bool (* wireless probe connection status *) }
+        fixed : bool; (* sensor type fixed by hardware *)
+        connected : bool (* wireless sensor connection status *) }
 
     let is_active ch =
       let open Temperature in
@@ -272,12 +340,15 @@ module Channel : Channel =
         "<>";
         "Range";
         "Alarm";
-        "Probe" ]
+        "Sensor" ]
 
-    (* TODO: translate probe type to string using "sensors" in /settings *)
-    let format probes ch =
-      ignore probes;
+    (* TODO: translate sensor type to string using "sensors" in /settings *)
+    let format sensors ch =
       let open Printf in
+      let sensor =
+        match Sensor.name_opt sensors ch.typ with
+        | None -> sprintf "?%3d" ch.typ
+        | Some s -> s.name in
       List.concat
         [ [ sprintf "%3d" ch.number;
             "\"" ^ ch.name ^ "\"" ];
@@ -290,7 +361,7 @@ module Channel : Channel =
           end;
           [ sprintf "[%5.1f,%5.1f]" ch.t_min ch.t_max;
             Alarm.format ch.alarm;
-            sprintf "%3d" ch.typ ] ]
+            sensor ] ]
 
     let format_unavailable ch =
       [ Printf.sprintf "%3d" ch; "[unavailable]" ]
@@ -538,47 +609,6 @@ module Data =
   end
 
 
-module Info =
-  struct
-
-    type t = string
-
-    let get options =
-      ThoCurl.get options "info"
-
-  end
-
-
-module Settings =
-  struct
-
-    type t = Yojson.Basic.t
-
-    (* This must be moved BEFORE Channel! *)
-    type probe =
-      { typ : int;
-        name : string;
-        fixed : bool }
-
-    let probe_of_json probe =
-      let open Yojson.Basic.Util in
-      { typ = probe |> member "type" |> to_int;
-        name = probe |> member "name" |> to_string;
-        fixed = probe |> member "fixed" |> to_bool }
-        
-    let get_json options =
-      ThoCurl.get_json options "settings"
-
-    let probes_of_json settings =
-      let open Yojson.Basic.Util in
-      settings |> member "sensors" |> to_list |> List.map probe_of_json
-
-    let probe_name_opt probes n =
-      List.find_opt (fun p -> p.typ = n) probes
-
-  end
-
-
 let data = Data.get_json
 let info = Info.get
 let settings = Settings.get_json
@@ -598,27 +628,26 @@ let format_battery options =
     system.charge
     (if system.charging then "(charging)" else "(not charging)")
 
-let format_all_channels ?(all=false) probes available =
+let format_all_channels ?(all=false) sensors available =
   let channels =
     if all then
       available
     else
       List.filter Channel.is_active available in
-  List.map (Channel.format probes) channels
+  List.map (Channel.format sensors) channels
 
-let format_channel probes available ch =
+let format_channel sensors available ch =
   match Channel.find_opt available ch with
   | None -> Channel.format_unavailable ch
-  | Some channel -> (Channel.format probes) channel
+  | Some channel -> (Channel.format sensors) channel
 
 let format_channels ?(all=false) options channels =
   let available = data options |> Data.channels_of_json
-  and probes = settings options |> Settings.probes_of_json in
-  ignore probes;
+  and sensors = settings options |> Settings.sensors_of_json in
   let unaligned =
     match channels with
-    | [] -> format_all_channels ~all probes available
-    | ch_list -> List.map (format_channel probes available) ch_list in
+    | [] -> format_all_channels ~all sensors available
+    | ch_list -> List.map (format_channel sensors available) ch_list in
   ThoString.align_string_lists " " (Channel.format_header :: unaligned)
 
 let update_channels common ?all ?range ?min ?max ?push ?beep channels =
