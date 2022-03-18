@@ -328,32 +328,37 @@ module Monitor : Unit_Cmd =
 
     (* int *)
     let wait_arg =
-      let doc = "Wait $(docv) seconds between measurements." in
+      let doc = "Wait $(docv) seconds between measurements. \
+                 A negative value or 0 will be mapped to 1." in
       let open Arg in
       value
       & opt int 10
       & info ["w"; "wait"] ~docv:"SEC"  ~doc
 
-    let loop ~wait ~number f =
-      let rec loop' () n =
-        f ();
+    (* TODO: carry state around. *)
+    let repeat ~wait ~number f initial =
+      let wait = max 1 wait
+      and number = max 0 number in
+      let rec repeat' n previous =
+        let state = f previous in
         if n <> 1 then
           begin
             Unix.sleep wait;
-            (loop' [@tailcall]) () (max 0 (pred n))
+            (repeat' [@tailcall]) (max 0 (pred n)) state
           end in
-      loop' () number
+      repeat' number initial
 
-    let monitor common () =
+    let monitor common n =
       ignore common;
-      Printf.printf "monitor ...\n";
-      flush stdout
+      Printf.printf "monitor ... (n=%3d)\n" n;
+      flush stdout;
+      succ n
 
     let term =
       let open Term in
       const
         (fun common wait number ->
-          loop ~wait ~number:(max 0 number) (monitor common))
+          repeat ~wait ~number (monitor common) 1)
       $ Common.term
       $ wait_arg
       $ number_arg
