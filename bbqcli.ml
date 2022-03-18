@@ -309,6 +309,61 @@ module Battery : Unit_Cmd =
   end
 
 
+module Monitor : Unit_Cmd =
+  struct
+
+    let man = [
+        `S Manpage.s_description;
+        `P "Continuously monitor the WLANThermo." ] @ Common.man_footer
+
+    (* int *)
+    let number_arg =
+      let doc = "Stop after $(docv) measurements. \
+                 A negative value or 0 will let the \
+                 monitoring contine indefinitely." in
+      let open Arg in
+      value
+      & opt int 0
+      & info ["n"; "number"] ~docv:"N"  ~doc
+
+    (* int *)
+    let wait_arg =
+      let doc = "Wait $(docv) seconds between measurements." in
+      let open Arg in
+      value
+      & opt int 10
+      & info ["w"; "wait"] ~docv:"SEC"  ~doc
+
+    let loop ~wait ~number f =
+      let rec loop' () n =
+        f ();
+        if n <> 1 then
+          begin
+            Unix.sleep wait;
+            (loop' [@tailcall]) () (max 0 (pred n))
+          end in
+      loop' () number
+
+    let monitor common () =
+      ignore common;
+      Printf.printf "monitor ...\n";
+      flush stdout
+
+    let term =
+      let open Term in
+      const
+        (fun common wait number ->
+          loop ~wait ~number:(max 0 number) (monitor common))
+      $ Common.term
+      $ wait_arg
+      $ number_arg
+
+    let cmd =
+      Cmd.v (Cmd.info "monitor" ~man) term
+
+  end
+
+
 module Main : Unit_Cmd =
   struct
 
@@ -330,6 +385,7 @@ module Main : Unit_Cmd =
         [ Temperature.cmd;
           Alarm.cmd;
           Pitmaster.cmd;
+          Monitor.cmd;
           Battery.cmd;
           Data.cmd;
           Settings.cmd;
