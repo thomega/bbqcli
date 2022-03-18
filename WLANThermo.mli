@@ -11,6 +11,8 @@ val format_battery : ThoCurl.options -> string
 val format_channels : ?all:bool -> ThoCurl.options -> int list -> string list
 val format_pitmasters : ThoCurl.options -> string list
 
+val monitor_temperatures : ThoCurl.options -> int list -> int list -> int list
+
 val update_channels :
   ThoCurl.options -> ?all:bool ->
   ?range:(float * float) -> ?min:float -> ?max:float ->

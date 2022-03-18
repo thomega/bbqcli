@@ -335,7 +335,12 @@ module Monitor : Unit_Cmd =
       & opt int 10
       & info ["w"; "wait"] ~docv:"SEC"  ~doc
 
-    (* TODO: carry state around. *)
+    (* Evaluate the ~number-th power
+
+         f (f (f ... (f initial)))
+
+       waiting ~wait(>0) seconds between evaluations. *)
+
     let repeat ~wait ~number f initial =
       let wait = max 1 wait
       and number = max 0 number in
@@ -348,18 +353,13 @@ module Monitor : Unit_Cmd =
           end in
       repeat' number initial
 
-    let monitor common n =
-      ignore common;
-      Printf.printf "monitor ... (n=%3d)\n" n;
-      flush stdout;
-      succ n
-
     let term =
       let open Term in
       const
-        (fun common wait number ->
-          repeat ~wait ~number (monitor common) 1)
+        (fun common channels wait number ->
+          repeat ~wait ~number (WT.monitor_temperatures common channels) [])
       $ Common.term
+      $ Channels.term
       $ wait_arg
       $ number_arg
 
@@ -377,12 +377,14 @@ module Main : Unit_Cmd =
         `P "Control a WLANThermo Mini V3 on the command line \
             using the HTTP API.";
         `S Manpage.s_examples;
-        `Pre "bbqcli alarm -c 9 -t 80-110 -p on";
-        `P "Sets the temperature range on channel 9 to [80,110] \
-            and switches on the push alert.";
-        `Pre "bbqcli temperature -a";
+        `Pre "  bbqcli alarm -C 3-5 -c 9 -t 80-110 -p on";
+        `P "Sets the temperature range on channels 3,4,5,9 \
+            to [80,110] and switches on the push alert.";
+        `Pre "  bbqcli temperature -a";
         `P "List the temperatures and limits for all channels, \
-            including the limits of disconnected channels."] @ Common.man_footer
+            including the limits of disconnected channels.";
+        `Pre "  bbqcli monitor -w 60";
+        `P "Monitor all temperatures every minute." ] @ Common.man_footer
 
     let cmd =
       Cmd.group

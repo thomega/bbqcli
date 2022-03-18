@@ -609,10 +609,10 @@ module Data =
 
     let format_temperatures_header width channels =
       let separator =
-        "#" ^ String.make ((width + 1) * (List.length channels) - 2) '-' in
+        "#" ^ String.make ((width + 1) * (List.length channels) - 1) '-' in
       [ separator;
         "#" ^ String.concat " "
-                (List.map (Printf.sprintf "%*d" (width - 2)) channels);
+                (List.map (Printf.sprintf " Ch%*d" (width - 3)) channels);
         separator ]
 
     let format_temperature width t =
@@ -622,8 +622,8 @@ module Data =
       | Inverted (t, _) | Too_low t | Too_high t
       | In_range t -> Printf.sprintf "%*.1f" width t
 
-    let format_temperatures ?(width=5) ?(prev=[]) channels =
-      Unix.sleep 10;
+    (* TODO: add time stamps *)
+    let format_temperatures ?(width=6) ?(prev=[]) channels =
       let line =
         [ " " ^ String.concat " "
                   (List.map
@@ -631,9 +631,9 @@ module Data =
                      channels) ] in
       let numbers = List.map (fun ch -> ch.Channel.number) channels in
       if numbers <> prev  then
-        format_temperatures_header width numbers @ line
+        (numbers, format_temperatures_header width numbers @ line)
       else
-        line
+        (numbers, line)
 
   end
 
@@ -642,6 +642,14 @@ let get_data = Data.get_json
 let get_info = Info.get
 let get_settings = Settings.get_json
 
+(* TODO: filter the channels *)
+let monitor_temperatures options channels prev =
+  ignore channels;
+  let active = get_data options |> Data.of_json |> Data.only_active in
+  let numbers, lines = Data.format_temperatures ~prev active.Data.channels in
+  List.iter print_endline lines;
+  flush stdout;
+  numbers
 
 let format_pitmasters options =
   let open Yojson.Basic.Util in
