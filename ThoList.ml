@@ -1,5 +1,6 @@
 (* ThoList.ml -- useful stuff missing from List *)
 
+(* NOT tail recursive, due to the cons! *)
 let range ?(stride=1) n1 n2 =
   if stride <= 0 then
     invalid_arg "range: stride <= 0"
@@ -11,6 +12,7 @@ let range ?(stride=1) n1 n2 =
         n :: range' (n + stride) in
     range' n1
 
+(* NOT tail recursive, due to the cons! *)
 let rec uniq' x = function
   | [] -> []
   | x' :: rest ->
@@ -44,5 +46,5 @@ let splice op pad1 pad2 l1 l2 =
     | [], l -> List.rev_append acc (List.map (fun x -> op pad1 x) l)
     | l, [] -> List.rev_append acc (List.map (fun x -> op x pad2) l)
     | h1 :: t1, h2 :: t2 ->
-       splice' (op h1 h2 :: acc) (t1, t2) in
+       (splice' [@tailcall]) (op h1 h2 :: acc) (t1, t2) in
   splice' [] (l1, l2)
