@@ -336,13 +336,13 @@ module Channel : Channel =
     let format_header =
       [ "Ch#";
         "Name";
-        "Temperatur";
+        "Temperature";
         "<>";
         "Range";
         "Alarm";
         "Sensor" ]
 
-    (* TODO: translate sensor type to string using "sensors" in /settings *)
+    (* TODO: handle Celsius/Fahrenheit. *)
     let format settings ch =
       let open Printf in
       let sensor =
@@ -605,6 +605,35 @@ module Data =
 
     let get_json options =
       ThoCurl.get_json options "data"
+
+
+    let format_temperatures_header width channels =
+      let separator =
+        "#" ^ String.make ((width + 1) * (List.length channels) - 2) '-' in
+      [ separator;
+        "#" ^ String.concat " "
+                (List.map (Printf.sprintf "%*d" (width - 2)) channels);
+        separator ]
+
+    let format_temperature width t =
+      let open Temperature in
+      match t with
+      | Inactive -> failwith "unexpected inactive channel"
+      | Inverted (t, _) | Too_low t | Too_high t
+      | In_range t -> Printf.sprintf "%*.1f" width t
+
+    let format_temperatures ?(width=5) ?(prev=[]) channels =
+      Unix.sleep 10;
+      let line =
+        [ " " ^ String.concat " "
+                  (List.map
+                     (fun ch -> format_temperature width ch.Channel.t)
+                     channels) ] in
+      let numbers = List.map (fun ch -> ch.Channel.number) channels in
+      if numbers <> prev  then
+        format_temperatures_header width numbers @ line
+      else
+        line
 
   end
 
