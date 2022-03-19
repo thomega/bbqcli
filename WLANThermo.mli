@@ -1,10 +1,12 @@
 (* WLANThermo.ml -- WLANThermo API *)
 
+module JSON = Yojson.Basic
+
 type switch = On | Off
 
-val get_data : ThoCurl.options -> Yojson.Basic.t
+val get_data : ThoCurl.options -> JSON.t
 val get_info : ThoCurl.options -> string
-val get_settings : ThoCurl.options -> Yojson.Basic.t
+val get_settings : ThoCurl.options -> JSON.t
 
 val format_battery : ThoCurl.options -> string
 

@@ -1,5 +1,7 @@
 (* WLANThermo.ml -- WLANThermo API *)
 
+module JSON = Yojson.Basic
+
 module Info =
   struct
 
@@ -20,7 +22,7 @@ module Sensor =
         fixed : bool }
 
     let of_json sensor =
-      let open Yojson.Basic.Util in
+      let open JSON.Util in
       { typ = sensor |> member "type" |> to_int;
         name = sensor |> member "name" |> to_string;
         fixed = sensor |> member "fixed" |> to_bool }
@@ -50,7 +52,7 @@ module Settings =
       ThoCurl.get_json options "settings"
 
     let sensors_of_json settings =
-      let open Yojson.Basic.Util in
+      let open JSON.Util in
       settings |> member "sensors" |> to_list |> List.map Sensor.of_json
 
     let of_json settings =
@@ -161,7 +163,7 @@ module type System =
         charging : bool;
         rssi : int;
         cloud : cloud }
-    val of_json : Yojson.Basic.t -> t
+    val of_json : JSON.t -> t
   end
 
 module System : System =
@@ -210,7 +212,7 @@ module System : System =
         cloud : cloud }
 
     let of_json s =
-      let open Yojson.Basic.Util in
+      let open JSON.Util in
       { time = s |> member "time" |> to_string |> int_of_string;
         t_unit = s |> member "unit" |> to_string |> t_unit_of_string;
         charge = s |> member "soc" |> to_int;
@@ -277,7 +279,7 @@ module type Channel =
         color : Color.t;
         fixed : bool;
         connected : bool }
-    val of_json : Yojson.Basic.t -> t
+    val of_json : JSON.t -> t
     val is_active : t -> bool
     val member : int -> t list -> bool
     val find_opt : t list -> int -> t option
@@ -318,7 +320,7 @@ module Channel : Channel =
       List.find_opt (fun ch -> ch.number = n) channels
 
     let of_json ch =
-      let open Yojson.Basic.Util in
+      let open JSON.Util in
       let temp = ch |> member "temp" |> to_float
       and t_min = ch |> member "min" |> to_float
       and t_max = ch |> member "max" |> to_float in
@@ -475,12 +477,12 @@ module Channel : Channel =
              |> apply_push ?push
              |> apply_beep ?beep
              |> mod_to_json in
-           let open Yojson.Basic.Util in
+           let open JSON.Util in
            match ThoCurl.post_json options "setchannels" command with
            | `Bool true -> ()
            | `Bool false -> failwith "response: false"
            | response ->
-              failwith ("unexpected: " ^ Yojson.Basic.to_string response)
+              failwith ("unexpected: " ^ JSON.to_string response)
          else
            ()
 
@@ -490,7 +492,8 @@ module type Pitmaster =
   sig
     type pm
     type t = pm list
-    val of_json : Yojson.Basic.t -> t
+    val of_json : JSON.t -> t
+    val is_active : pm -> bool
     val format : pm -> string list
     val format_header : string list
   end
@@ -526,7 +529,7 @@ module Pitmaster : Pitmaster =
         value_color : Color.t }
 
     let pm_of_json pm =
-      let open Yojson.Basic.Util in
+      let open JSON.Util in
       { id = pm |> member "id" |> to_int;
         channel = pm |> member "channel" |> to_int;
         pid = pm |> member "pid" |> to_int;
@@ -537,11 +540,16 @@ module Pitmaster : Pitmaster =
         target_color = pm |> member "set_color" |> to_string |> Color.of_string;
         value_color = pm |> member "value_color" |> to_string |> Color.of_string }
 
+    let is_active pm =
+      match pm.mode with
+      | Off -> false
+      | Manual | Auto -> true
+
     let format_mode pm =
       match pm.mode with
       | Off -> "off"
-      | Manual -> Printf.sprintf "manual %2d%%" pm.value
-      | Auto -> Printf.sprintf "target %3f deg" pm.target
+      | Manual -> Printf.sprintf "%3d%% (manual)" pm.value
+      | Auto -> Printf.sprintf "%3d%% target %3f deg" pm.value pm.target
 
     let format_header =
       [ "PM#";
@@ -561,7 +569,7 @@ module Pitmaster : Pitmaster =
     type t = pm list
 
     let of_json pitmaster =
-      let open Yojson.Basic.Util in
+      let open JSON.Util in
       pitmaster |> member "pm" |> to_list |> List.map pm_of_json
 
     let to_json _ =
@@ -570,38 +578,55 @@ module Pitmaster : Pitmaster =
   end
 
 
-module Data =
+module type Data =
+  sig
+    type t = private
+      { system : System.t;
+        channels : Channel.t list;
+        pitmasters : Pitmaster.t }
+    val get_json : ThoCurl.options -> JSON.t
+    val of_json : JSON.t -> t
+    val only_active : t -> t
+    val format_temperatures : ?width:int -> ?prev:int list -> t -> int list * string list
+    val system_of_json : JSON.t -> System.t
+    val channels_of_json : JSON.t -> Channel.t list
+    val pitmasters_of_json : JSON.t -> Pitmaster.t
+  end
+
+module Data : Data =
   struct
 
     type t =
       { system : System.t;
         channels : Channel.t list;
-        pitmaster : Pitmaster.t }
+        pitmasters : Pitmaster.t }
 
     let sort_channels channels =
       let open Channel in
       List.sort (fun ch1 ch2 -> compare ch1.number ch2.number) channels
 
     let system_of_json data =
-      let open Yojson.Basic.Util in
+      let open JSON.Util in
       data |> member "system" |> System.of_json
 
     let channels_of_json data =
-      let open Yojson.Basic.Util in
+      let open JSON.Util in
       data |> member "channel" |> to_list |> List.map Channel.of_json |> sort_channels
 
-    let pitmaster_of_json data =
-      let open Yojson.Basic.Util in
+    let pitmasters_of_json data =
+      let open JSON.Util in
       data |> member "pitmaster" |> Pitmaster.of_json
 
     let of_json data =
-      let open Yojson.Basic.Util in
+      let open JSON.Util in
       { system = system_of_json data;
         channels = channels_of_json data;
-        pitmaster = pitmaster_of_json data }
+        pitmasters = pitmasters_of_json data }
 
     let only_active data =
-      { data with channels = List.filter Channel.is_active data.channels }
+      { data with
+        channels = List.filter Channel.is_active data.channels;
+        pitmasters = List.filter Pitmaster.is_active data.pitmasters }
 
     let get_json options =
       ThoCurl.get_json options "data"
@@ -623,13 +648,13 @@ module Data =
       | In_range t -> Printf.sprintf "%*.1f" width t
 
     (* TODO: add time stamps *)
-    let format_temperatures ?(width=6) ?(prev=[]) channels =
+    let format_temperatures ?(width=6) ?(prev=[]) data =
       let line =
         [ " " ^ String.concat " "
                   (List.map
                      (fun ch -> format_temperature width ch.Channel.t)
-                     channels) ] in
-      let numbers = List.map (fun ch -> ch.Channel.number) channels in
+                     data.channels) ] in
+      let numbers = List.map (fun ch -> ch.Channel.number) data.channels in
       if numbers <> prev  then
         (numbers, format_temperatures_header width numbers @ line)
       else
@@ -646,16 +671,15 @@ let get_settings = Settings.get_json
 let monitor_temperatures options channels prev =
   ignore channels;
   let active = get_data options |> Data.of_json |> Data.only_active in
-  let numbers, lines = Data.format_temperatures ~prev active.Data.channels in
+  let numbers, lines = Data.format_temperatures ~prev active in
   List.iter print_endline lines;
   flush stdout;
   numbers
 
 let format_pitmasters options =
-  let open Yojson.Basic.Util in
+  let open JSON.Util in
   let unaligned =
-    get_data options |> member "pitmaster"
-    |> Pitmaster.of_json |> List.map Pitmaster.format in
+    get_data options |> Data.pitmasters_of_json |> List.map Pitmaster.format in
   ThoString.align_string_lists " " (Pitmaster.format_header :: unaligned)
 
 let format_battery options =

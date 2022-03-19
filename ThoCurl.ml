@@ -1,5 +1,7 @@
 (* ThoCurl.ml -- simple interface to curl(1) *)
 
+module JSON = Yojson.Basic
+
 type options =
   { ssl : bool;
     host : string;
@@ -10,7 +12,7 @@ let separator = String.make 72 '='
 
 let string_to_json s =
   try
-    Yojson.Basic.from_string s
+    JSON.from_string s
   with
   | Yojson.Json_error msg ->
      Printf.eprintf
@@ -87,4 +89,4 @@ let post options path ?content data =
   do_curl options path (setup_post ?content data)
 
 let post_json options path data =
-  post options path ~content:JSON (Yojson.Basic.to_string data) |> string_to_json
+  post options path ~content:JSON (JSON.to_string data) |> string_to_json
