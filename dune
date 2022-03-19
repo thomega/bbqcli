@@ -1,7 +1,6 @@
 (executable
   (name bbqcli)
   (public_name bbqcli)
-  (modules bbqcli WLANThermo ThoCurl ThoList ThoString)
   (flags (:standard -w -K))
   (ocamlopt_flags (:standard -inline 32))
-  (libraries unix curl yojson cmdliner))
+  (libraries curl yojson cmdliner))
