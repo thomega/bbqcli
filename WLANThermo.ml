@@ -680,7 +680,6 @@ module Data : Data =
            "%*.1f %*d%%"
            width pm.Pitmaster.target (width - 1) pm.Pitmaster.value
 
-    (* TODO: add active pitmasters *)
     (* TODO: add time stamps *)
     let format_temperatures ?(width=6) ?(prev=([],[])) data =
       let line =
