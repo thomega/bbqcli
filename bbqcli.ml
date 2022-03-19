@@ -357,7 +357,7 @@ module Monitor : Unit_Cmd =
       let open Term in
       const
         (fun common channels wait number ->
-          repeat ~wait ~number (WT.monitor_temperatures common channels) [])
+          repeat ~wait ~number (WT.monitor_temperatures common channels) ([], []))
       $ Common.term
       $ Channels.term
       $ wait_arg
