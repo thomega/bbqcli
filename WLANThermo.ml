@@ -718,11 +718,11 @@ let monitor_temperatures options ?tformat ?start channels prev =
     match start with
     | None ->
        ((match tformat with Some tformat -> tformat | None -> "%F %T"),
-        CalendarLib.Calendar.now ())
+        ThoTime.now ())
     | Some epoch ->
        ((match tformat with Some tformat -> tformat | None -> "%T"),
-        CalendarLib.Calendar.from_unixfloat (Unix.time () -. epoch)) in
-  let time = CalendarLib.Printer.Calendar.sprint tformat time in
+        ThoTime.from_unix (Unix.time () -. epoch)) in
+  let time = ThoTime.sprint tformat time in
   let numbers, lines = Data.format_temperatures ~prev ~time active in
   List.iter print_endline lines;
   flush stdout;

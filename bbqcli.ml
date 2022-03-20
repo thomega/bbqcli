@@ -385,13 +385,10 @@ module Monitor : Unit_Cmd =
         (fun common channels tformat from_now start wait number ->
           let start =
             match start with
-            | Some s ->
-               (* TODO: time zone is always UTC! *)
-               Some (CalendarLib.Calendar.to_unixfloat
-                       (CalendarLib.Printer.Calendar.from_string s))
+            | Some s -> Some (ThoTime.unix_of_string s)
             | None ->
                if from_now then
-                 Some (Unix.time ())
+                 Some (ThoTime.unix_now ())
                else
                  None in
           repeat
@@ -443,5 +440,5 @@ module Main : Unit_Cmd =
   end
 
 let () =
-  CalendarLib.Time_Zone.change CalendarLib.Time_Zone.Local;
+  ThoTime.use_local_time ();
   exit (Cmd.eval Main.cmd)
