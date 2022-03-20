@@ -647,18 +647,19 @@ module Data : Data =
       ThoCurl.get_json options "data"
 
 
-    let format_temperatures_header width time_width (channels, pitmasters) =
+    let format_temperatures_header width time (channels, pitmasters) =
       let columns = List.length channels + 2 * (List.length pitmasters) in
+      let time_width = String.length time in
       let separator =
         "#" ^ String.make (time_width + (width + 1) * columns) '-' in
       [ separator;
         "#" ^ String.concat " "
                 ([String.make time_width ' ']
                   @ List.map
-                      (Printf.sprintf " Ch%*d" (width - 3))
+                      (Printf.sprintf "  Ch%*d" (width - 4))
                       channels
                   @ List.map
-                      (fun pm -> Printf.sprintf " PM%*d%*s" (width - 3) pm width "")
+                      (fun pm -> Printf.sprintf "  PM%*d%*s" (width - 4) pm width "")
                       pitmasters);
         separator ]
 
@@ -696,7 +697,7 @@ module Data : Data =
         (List.map (fun ch -> ch.Channel.number) data.channels,
          List.map (fun pm -> pm.Pitmaster.channel) data.pitmasters) in
       if numbers <> prev  then
-        (numbers, format_temperatures_header width (String.length time) numbers @ line)
+        (numbers, format_temperatures_header width time numbers @ line)
       else
         (numbers, line)
 
@@ -709,11 +710,19 @@ let get_settings = Settings.get_json
 
 (* TODO: filter the channels *)
 (* TODO: time zone/format *)
-let monitor_temperatures options channels prev =
+
+let monitor_temperatures options ?tformat ?start channels prev =
   ignore channels;
   let active = get_data options |> Data.of_json |> Data.only_active in
-  let time =
-    CalendarLib.Printer.Calendar.sprint "%F %T" (CalendarLib.Calendar.now ()) in
+  let tformat, time =
+    match start with
+    | None ->
+       ((match tformat with Some tformat -> tformat | None -> "%F %T"),
+        CalendarLib.Calendar.now ())
+    | Some epoch ->
+       ((match tformat with Some tformat -> tformat | None -> "%T"),
+        CalendarLib.Calendar.from_unixfloat (Unix.time () -. epoch)) in
+  let time = CalendarLib.Printer.Calendar.sprint tformat time in
   let numbers, lines = Data.format_temperatures ~prev ~time active in
   List.iter print_endline lines;
   flush stdout;
