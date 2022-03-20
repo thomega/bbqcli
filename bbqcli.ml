@@ -335,6 +335,23 @@ module Monitor : Unit_Cmd =
       & opt int 10
       & info ["w"; "wait"] ~docv:"SEC"  ~doc
 
+    (* string *)
+    let tformat_arg =
+      let doc = "Use $(docv) to format the timestamp. \
+                 The default is \"%F %T\"." in
+      let open Arg in
+      value
+      & opt (some string) None
+      & info ["f"; "format"] ~docv:"FORMAT"  ~doc
+
+    (* bool *)
+    let from_zero_arg =
+      let doc = "Count time from 0." in
+      let open Arg in
+      value
+      & opt bool ~vopt:true false
+      & info ["z"; "from_zero"] ~docv:"true/false"  ~doc
+
     (* Evaluate the ~number-th power
 
          f (f (f ... (f initial)))
@@ -356,13 +373,17 @@ module Monitor : Unit_Cmd =
     let term =
       let open Term in
       const
-        (fun common channels wait number ->
-          let tformat = "%F %T"
-          and start = Unix.time () in
-          ignore (tformat, start);
-          repeat ~wait ~number (WT.monitor_temperatures (* ~tformat ~start *) common channels) ([], []))
+        (fun common channels tformat from_zero wait number ->
+          let start =
+            if from_zero then
+              Some (Unix.time ())
+            else
+              None in
+          repeat ~wait ~number (WT.monitor_temperatures ?tformat ?start common channels) ([], []))
       $ Common.term
       $ Channels.term
+      $ tformat_arg
+      $ from_zero_arg
       $ wait_arg
       $ number_arg
 
