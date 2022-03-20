@@ -385,7 +385,7 @@ module Monitor : Unit_Cmd =
         (fun common channels tformat from_now start wait number ->
           let start =
             match start with
-            | Some s -> Some (ThoTime.unix_of_string s)
+            | Some s -> Some (ThoTime.unix_of_string_time s)
             | None ->
                if from_now then
                  Some (ThoTime.unix_now ())
@@ -440,5 +440,4 @@ module Main : Unit_Cmd =
   end
 
 let () =
-  ThoTime.use_local_time ();
   exit (Cmd.eval Main.cmd)

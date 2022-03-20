@@ -3,4 +3,4 @@
   (public_name bbqcli)
   (flags (:standard -w -K))
   (ocamlopt_flags (:standard -inline 32))
-  (libraries calendar cmdliner curl yojson))
+  (libraries cmdliner curl yojson))
