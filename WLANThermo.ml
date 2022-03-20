@@ -721,7 +721,7 @@ let monitor_temperatures options ?tformat ?start channels prev =
         ThoTime.now ())
     | Some epoch ->
        ((match tformat with Some tformat -> tformat | None -> "%T"),
-        ThoTime.subtract (ThoTime.now ()) epoch) in
+        ThoTime.diff (ThoTime.now ()) epoch) in
   ignore tformat;
   let time = ThoTime.to_string_time time in
   let numbers, lines = Data.format_temperatures ~prev ~time active in

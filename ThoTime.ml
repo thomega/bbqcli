@@ -4,7 +4,7 @@
 
 type t = float
 
-let subtract t1 t2 =
+let diff t1 t2 =
   t1 -. t2
 
 let normalize tm =
@@ -44,6 +44,7 @@ let of_string_time s =
   | [h; m; s] -> of_hms (int_of_string h) (int_of_string m) (int_of_string s)
   | _ -> invalid_arg "ThoTime.of_string: too many components"
 
+(* FIXME: (to_string_time 3600.) gives "02:00:00" *)
 let to_string_time t =
   let open Unix in
   let tm = localtime t in
