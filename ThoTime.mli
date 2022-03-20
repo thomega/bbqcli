@@ -8,4 +8,8 @@ val sprint : string -> t -> string
    
 type unix = float
 val unix_of_string : string -> unix
+
 val unix_now : unit -> unix
+val unix_of_string_time : string -> unix
+val unix_to_string_time : unix -> string
+val unix_to_string_date_time : unix -> string
