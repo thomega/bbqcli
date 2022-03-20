@@ -1,7 +1,8 @@
 (* ThoTime.mli -- lightweight time manipulations. *)
 
-type unix = float
-val unix_now : unit -> unix
-val unix_of_string_time : string -> unix
-val unix_to_string_time : unix -> string
-val unix_to_string_date_time : unix -> string
+type t
+val subtract : t -> t -> t
+val now : unit -> t
+val of_string_time : string -> t
+val to_string_time : t -> string
+val to_string_date_time : t -> string

@@ -2,12 +2,15 @@
 
 (* TODO: the time zone wrong sometimes! *)
 
-type unix = float
+type t = float
+
+let subtract t1 t2 =
+  t1 -. t2
 
 let normalize tm =
   snd (Unix.mktime tm)
 
-let unix_now () =
+let now () =
   Unix.time ()
 
 let seconds h m s =
@@ -30,25 +33,25 @@ let tm_of_hms tm_hour tm_min tm_sec =
   else
     normalize { now with tm_hour; tm_min; tm_sec }
 
-let unix_of_hms tm_hour tm_min tm_sec =
+let of_hms tm_hour tm_min tm_sec =
   fst (Unix.mktime (tm_of_hms tm_hour tm_min tm_sec))
 
-let unix_of_string_time s =
+let of_string_time s =
   match String.split_on_char ':' s with
-  | [] -> failwith "unix_of_string: unexpected"
-  | [_] -> invalid_arg "unix_of_string: ambiguous"
-  | [h; m] -> unix_of_hms (int_of_string h) (int_of_string m) 0
-  | [h; m; s] -> unix_of_hms (int_of_string h) (int_of_string m) (int_of_string s)
-  | _ -> invalid_arg "unix_of_string: too many components"
+  | [] -> failwith "ThoTime.of_string: unexpected"
+  | [_] -> invalid_arg "ThoTime.of_string: ambiguous"
+  | [h; m] -> of_hms (int_of_string h) (int_of_string m) 0
+  | [h; m; s] -> of_hms (int_of_string h) (int_of_string m) (int_of_string s)
+  | _ -> invalid_arg "ThoTime.of_string: too many components"
 
-let unix_to_string_time t =
+let to_string_time t =
   let open Unix in
   let tm = localtime t in
   Printf.sprintf
     "%02d:%02d:%02d"
     tm.tm_hour tm.tm_min tm.tm_sec
 
-let unix_to_string_date_time t =
+let to_string_date_time t =
   let open Unix in
   let tm = localtime t in
   Printf.sprintf
