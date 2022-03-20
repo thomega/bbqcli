@@ -335,7 +335,7 @@ module Monitor : Unit_Cmd =
       & opt int 10
       & info ["w"; "wait"] ~docv:"SEC"  ~doc
 
-    (* string *)
+    (* string option *)
     let tformat_arg =
       let doc = "Use $(docv) to format the timestamp. \
                  The default is \"%F %T\"." in
@@ -345,12 +345,21 @@ module Monitor : Unit_Cmd =
       & info ["f"; "format"] ~docv:"FORMAT"  ~doc
 
     (* bool *)
-    let from_zero_arg =
+    let from_now_arg =
       let doc = "Count time from 0." in
       let open Arg in
       value
       & opt bool ~vopt:true false
-      & info ["z"; "from_zero"] ~docv:"true/false"  ~doc
+      & info ["N"; "from_now"] ~docv:"true/false"  ~doc
+
+    (* string option *)
+    let start_arg =
+      let doc = "Print time relative to $(docv). \
+                 Must be given in the format \"YYYY-MM-DD HH-MM-SS\"." in
+      let open Arg in
+      value
+      & opt (some string) None
+      & info ["S"; "start"] ~docv:"DATETIME"  ~doc
 
     (* Evaluate the ~number-th power
 
@@ -373,17 +382,26 @@ module Monitor : Unit_Cmd =
     let term =
       let open Term in
       const
-        (fun common channels tformat from_zero wait number ->
+        (fun common channels tformat from_now start wait number ->
           let start =
-            if from_zero then
-              Some (Unix.time ())
-            else
-              None in
-          repeat ~wait ~number (WT.monitor_temperatures ?tformat ?start common channels) ([], []))
+            match start with
+            | Some s ->
+               (* TODO: time zone is always UTC! *)
+               Some (CalendarLib.Calendar.to_unixfloat
+                       (CalendarLib.Printer.Calendar.from_string s))
+            | None ->
+               if from_now then
+                 Some (Unix.time ())
+               else
+                 None in
+          repeat
+            ~wait ~number
+            (WT.monitor_temperatures ?tformat ?start common channels) ([], []))
       $ Common.term
       $ Channels.term
       $ tformat_arg
-      $ from_zero_arg
+      $ from_now_arg
+      $ start_arg
       $ wait_arg
       $ number_arg
 
