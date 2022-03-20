@@ -401,4 +401,5 @@ module Main : Unit_Cmd =
   end
 
 let () =
+  CalendarLib.Time_Zone.change CalendarLib.Time_Zone.Local;
   exit (Cmd.eval Main.cmd)

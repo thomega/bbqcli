@@ -600,8 +600,9 @@ module type Data =
     val get_json : ThoCurl.options -> JSON.t
     val of_json : JSON.t -> t
     val only_active : t -> t
-    val format_temperatures : ?width:int -> ?prev:(int list * int list) ->
-                              t -> (int list * int list) * string list
+    val format_temperatures : ?width:int -> ?time:string ->
+                              ?prev:(int list * int list) -> t ->
+                              (int list * int list) * string list
     val system_of_json : JSON.t -> System.t
     val channels_of_json : JSON.t -> Channel.t list
     val pitmasters_of_json : JSON.t -> Pitmaster.t
@@ -646,18 +647,19 @@ module Data : Data =
       ThoCurl.get_json options "data"
 
 
-    let format_temperatures_header width (channels, pitmasters) =
+    let format_temperatures_header width time_width (channels, pitmasters) =
       let columns = List.length channels + 2 * (List.length pitmasters) in
       let separator =
-        "#" ^ String.make ((width + 1) * columns - 1) '-' in
+        "#" ^ String.make (time_width + (width + 1) * columns) '-' in
       [ separator;
         "#" ^ String.concat " "
-                (List.map
-                   (Printf.sprintf " Ch%*d" (width - 3))
-                   channels
-                 @ List.map
-                   (fun pm -> Printf.sprintf " PM%*d%*s" (width - 3) pm width "")
-                   pitmasters);
+                ([String.make time_width ' ']
+                  @ List.map
+                      (Printf.sprintf " Ch%*d" (width - 3))
+                      channels
+                  @ List.map
+                      (fun pm -> Printf.sprintf " PM%*d%*s" (width - 3) pm width "")
+                      pitmasters);
         separator ]
 
     let format_temperature width t =
@@ -680,21 +682,21 @@ module Data : Data =
            "%*.1f %*d%%"
            width pm.Pitmaster.target (width - 1) pm.Pitmaster.value
 
-    (* TODO: add time stamps *)
-    let format_temperatures ?(width=6) ?(prev=([],[])) data =
+    let format_temperatures ?(width=6) ?(time="") ?(prev=([],[])) data =
       let line =
         [ " " ^ String.concat " "
-                  (List.map
-                     (fun ch -> format_temperature width ch.Channel.t)
-                     data.channels
+                  ([ time ]
                    @ List.map
-                     (fun pm -> format_pitmaster width pm)
-                     data.pitmasters) ] in
+                       (fun ch -> format_temperature width ch.Channel.t)
+                       data.channels
+                   @ List.map
+                       (fun pm -> format_pitmaster width pm)
+                       data.pitmasters) ] in
       let numbers =
         (List.map (fun ch -> ch.Channel.number) data.channels,
          List.map (fun pm -> pm.Pitmaster.channel) data.pitmasters) in
       if numbers <> prev  then
-        (numbers, format_temperatures_header width numbers @ line)
+        (numbers, format_temperatures_header width (String.length time) numbers @ line)
       else
         (numbers, line)
 
@@ -706,10 +708,13 @@ let get_info = Info.get
 let get_settings = Settings.get_json
 
 (* TODO: filter the channels *)
+(* TODO: time zone/format *)
 let monitor_temperatures options channels prev =
   ignore channels;
   let active = get_data options |> Data.of_json |> Data.only_active in
-  let numbers, lines = Data.format_temperatures ~prev active in
+  let time =
+    CalendarLib.Printer.Calendar.sprint "%F %T" (CalendarLib.Calendar.now ()) in
+  let numbers, lines = Data.format_temperatures ~prev ~time active in
   List.iter print_endline lines;
   flush stdout;
   numbers
