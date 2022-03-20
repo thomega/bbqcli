@@ -4,9 +4,6 @@
 
 type t = float
 
-let diff t1 t2 =
-  t1 -. t2
-
 let normalize tm =
   snd (Unix.mktime tm)
 
@@ -45,16 +42,21 @@ let of_string_time s =
   | _ -> invalid_arg "ThoTime.of_string: too many components"
 
 (* FIXME: (to_string_time 3600.) gives "02:00:00" *)
-let to_string_time t =
+let localtime_since ?since t =
+  match since with
+  | None -> Unix.localtime t
+  | Some offset -> Unix.gmtime (t -. offset)
+      
+let to_string_time ?since t =
   let open Unix in
-  let tm = localtime t in
+  let tm = localtime_since ?since t in
   Printf.sprintf
     "%02d:%02d:%02d"
     tm.tm_hour tm.tm_min tm.tm_sec
 
-let to_string_date_time t =
+let to_string_date_time ?since t =
   let open Unix in
-  let tm = localtime t in
+  let tm = localtime_since ?since t in
   Printf.sprintf
     "%4d-%02d-%02d %02d:%02d:%02d"
     (tm.tm_year + 1900) (succ tm.tm_mon) tm.tm_mday
