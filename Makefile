@@ -23,5 +23,10 @@ clean:
 	dune clean
 	rm -f *~
 
-publish:
+docs: README.md
+
+README.md: all
+	./make_readme > $@
+
+publish: all docs
 	git push -u github main
