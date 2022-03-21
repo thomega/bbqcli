@@ -711,18 +711,10 @@ let get_settings = Settings.get_json
 (* TODO: filter the channels *)
 (* TODO: time zone/format *)
 
-let monitor_temperatures options ?tformat ?start channels prev =
+let monitor_temperatures options ?format channels prev =
   ignore channels;
   let active = get_data options |> Data.of_json |> Data.only_active in
-  let tformat, time =
-    match start with
-    | None ->
-       ((match tformat with Some tformat -> tformat | None -> "%F %T"),
-        ThoTime.to_string_date_time (ThoTime.now ()))
-    | Some since ->
-       ((match tformat with Some tformat -> tformat | None -> "%T"),
-        ThoTime.to_string_time ~since (ThoTime.now ())) in
-  ignore tformat;
+  let time = ThoTime.now () |> ThoTime.to_string ?format in
   let numbers, lines = Data.format_temperatures ~prev ~time active in
   List.iter print_endline lines;
   flush stdout;

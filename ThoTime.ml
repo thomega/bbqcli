@@ -41,23 +41,39 @@ let of_string_time s =
   | [h; m; s] -> of_hms (int_of_string h) (int_of_string m) (int_of_string s)
   | _ -> invalid_arg "ThoTime.of_string: too many components"
 
+type format =
+  | Time
+  | Time_since of t
+  | Date_Time
+  | Seconds
+  | Seconds_since of t
+
 (* FIXME: (to_string_time 3600.) gives "02:00:00" *)
 let localtime_since ?since t =
   match since with
   | None -> Unix.localtime t
   | Some offset -> Unix.gmtime (t -. offset)
       
+let to_string_seconds ?(since=0.) t =
+  Printf.sprintf "%10.0f" (t -. since)
+
 let to_string_time ?since t =
-  let open Unix in
   let tm = localtime_since ?since t in
   Printf.sprintf
     "%02d:%02d:%02d"
     tm.tm_hour tm.tm_min tm.tm_sec
 
 let to_string_date_time ?since t =
-  let open Unix in
   let tm = localtime_since ?since t in
   Printf.sprintf
     "%4d-%02d-%02d %02d:%02d:%02d"
     (tm.tm_year + 1900) (succ tm.tm_mon) tm.tm_mday
     tm.tm_hour tm.tm_min tm.tm_sec
+
+let to_string ?(format=Time) t =
+  match format with
+  | Time -> to_string_time t
+  | Time_since since -> to_string_time ~since t
+  | Date_Time-> to_string_date_time t
+  | Seconds -> to_string_seconds t
+  | Seconds_since since -> to_string_seconds ~since t

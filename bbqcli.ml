@@ -1,6 +1,7 @@
 (* bbqcli.ml -- CLI etc. for the WLANThermo API *)
 
 let host_default = "wlanthermo"
+let program_name = "bbqcli"
 
 module WT = WLANThermo
 
@@ -335,31 +336,31 @@ module Monitor : Unit_Cmd =
       & opt int 10
       & info ["w"; "wait"] ~docv:"SEC"  ~doc
 
-    (* string option *)
-    let tformat_arg =
-      let doc = "Use $(docv) to format the timestamp. \
-                 The default is \"%F %T\"." in
-      let open Arg in
-      value
-      & opt (some string) None
-      & info ["f"; "format"] ~docv:"FORMAT"  ~doc
-
-    (* bool *)
-    let from_now_arg =
-      let doc = "Count time from 0." in
-      let open Arg in
-      value
-      & opt bool ~vopt:true false
-      & info ["N"; "from_now"] ~docv:"true/false"  ~doc
+    type format =
+      | Time
+      | Date_Time
+      | Seconds
+    let format_list = [("time", Time); ("date-time", Date_Time); ("seconds", Seconds)]
+    let format_enum = Arg.enum format_list
+    let format_docv = String.concat "|" (List.map fst format_list)
 
     (* string option *)
-    let start_arg =
-      let doc = "Print time relative to $(docv). \
-                 Must be given in the format \"YYYY-MM-DD HH-MM-SS\"." in
+    let format_arg =
+      let doc = "Select the format of the timestamp." in
       let open Arg in
       value
-      & opt (some string) None
-      & info ["S"; "start"] ~docv:"DATETIME"  ~doc
+      & opt (some format_enum) ~vopt:(Some Time) None
+      & info ["F"; "format"] ~docv:"FORMAT"  ~doc
+
+    (* string option *)
+    let epoch_arg =
+      let doc = "Print time passed since $(docv). \
+                 An empty string means now.  Otherwise it must \
+                 be given in the format \"HH:MM\" or \"HH:MM:SS\"." in
+      let open Arg in
+      value
+      & opt (some string) ~vopt:(Some "") None
+      & info ["E"; "epoch"] ~docv:"TIME"  ~doc
 
     (* Evaluate the ~number-th power
 
@@ -379,26 +380,36 @@ module Monitor : Unit_Cmd =
           end in
       repeat' number initial
 
+    let decode_epoch epoch =
+      match String.lowercase_ascii epoch with
+      | "" | "n" | "no" | "now" -> ThoTime.now ()
+      | time -> ThoTime.of_string_time time
+
+    let decode_format_epoch = function
+      | (None | Some Time), None -> ThoTime.Time
+      | Some Seconds, None -> ThoTime.Seconds
+      | Some Date_Time, None -> ThoTime.Date_Time
+      | (None | Some Time), Some epoch ->
+         ThoTime.Time_since (decode_epoch epoch)
+      | Some Seconds, Some epoch -> ThoTime.Seconds_since (decode_epoch epoch)
+      | Some Date_Time, Some epoch ->
+         prerr_endline
+           (program_name ^
+              ": the combination of --format=date-time with --epoch \
+               makes no sense, falling back to --format=time.");
+         flush stderr;
+         ThoTime.Time_since (decode_epoch epoch)
+
     let term =
       let open Term in
       const
-        (fun common channels tformat from_now start wait number ->
-          let start =
-            match start with
-            | Some s -> Some (ThoTime.of_string_time s)
-            | None ->
-               if from_now then
-                 Some (ThoTime.now ())
-               else
-                 None in
-          repeat
-            ~wait ~number
-            (WT.monitor_temperatures ?tformat ?start common channels) ([], []))
+        (fun common channels format epoch wait number ->
+          let format = decode_format_epoch (format, epoch) in
+          repeat ~wait ~number (WT.monitor_temperatures ~format common channels) ([], []))
       $ Common.term
       $ Channels.term
-      $ tformat_arg
-      $ from_now_arg
-      $ start_arg
+      $ format_arg
+      $ epoch_arg
       $ wait_arg
       $ number_arg
 

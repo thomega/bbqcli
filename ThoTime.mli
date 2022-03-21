@@ -2,6 +2,14 @@
 
 type t
 val now : unit -> t
+
 val of_string_time : string -> t
-val to_string_time : ?since:t -> t -> string
-val to_string_date_time : ?since:t -> t -> string
+
+type format =
+  | Time
+  | Time_since of t
+  | Date_Time
+  | Seconds
+  | Seconds_since of t
+
+val to_string : ?format:format -> t -> string

@@ -14,7 +14,7 @@ val format_channels : ?all:bool -> ThoCurl.options -> int list -> string list
 val format_pitmasters : ThoCurl.options -> string list
 
 val monitor_temperatures :
-  ThoCurl.options -> ?tformat:string -> ?start:ThoTime.t ->
+  ThoCurl.options -> ?format:ThoTime.format ->
   int list -> int list * int list -> int list * int list 
 
 val update_channels :
