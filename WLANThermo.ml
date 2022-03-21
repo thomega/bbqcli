@@ -508,7 +508,7 @@ module type Pitmaster =
     val format : pm -> string list
     val format_header : string list
     val update :
-      ThoCurl.options -> ?channel:int -> t -> int -> unit
+      ThoCurl.options -> ?channel:int -> int -> t -> unit
   end
 
 module Pitmaster : Pitmaster =
@@ -587,62 +587,67 @@ module Pitmaster : Pitmaster =
 
     type mod_pm  =
       { mod_id : int;
-        mod_channel: int option;
-        mod_pid: int option;
-        mod_value: int option;
-        mod_target: float option;
-        mod_mode: mode option }
+        mod_channel: int;
+        mod_pid: int;
+        mod_value: int;
+        mod_target: float;
+        mod_mode: mode }
 
     let unchanged pm =
       { mod_id = pm.id;
-        mod_channel = None;
-        mod_pid = None;
-        mod_value = None;
-        mod_target = None;
-        mod_mode = None }
+        mod_channel = pm.channel;
+        mod_pid = pm.pid;
+        mod_value = pm.value;
+        mod_target = pm.target;
+        mod_mode = pm.mode }
 
     let mode_to_json name mode =
       [ name, `String (mode_to_string mode) ]
 
-    (* WLANThermo expects us to wrap the object in an array. *)
+    (* WLANThermo expects a complete opbject and expects us to wrap
+       it in an array. *)
+    (* Using List.concat here is infinitesimally inefficient,
+       but allows us to use the *_to_json functions for uniformity. *)
     let mod_to_json pm =
       let pm_json =
         `Assoc (List.concat
-                  [ int_to_json "number" pm.mod_id;
-                    int_option_to_json "channel" pm.mod_channel;
-                    int_option_to_json "pid" pm.mod_pid;
-                    int_option_to_json "value" pm.mod_value;
-                    float_option_to_json "set" pm.mod_target;
-                    option_to_json mode_to_json "typ" pm.mod_mode ]) in
+                  [ int_to_json "id" pm.mod_id;
+                    int_to_json "channel" pm.mod_channel;
+                    int_to_json "pid" pm.mod_pid;
+                    int_to_json "value" pm.mod_value;
+                    float_to_json "set" pm.mod_target;
+                    mode_to_json "typ" pm.mod_mode ]) in
       `List ([pm_json])
 
     let apply_channel ?channel pm =
-      { pm with mod_channel = channel }
+      match channel with
+      | None -> pm
+      | Some ch -> { pm with mod_channel = ch }
 
     let apply_pid pid pm =
-      { pm with mod_pid = Some pid }
+      { pm with mod_pid = pid }
 
     let apply_off pm =
-      { pm with mod_mode = Some Off }
+      { pm with mod_mode = Off }
 
     let apply_auto pm target =
-      { pm with mod_mode = Some Auto; mod_target = Some target }
+      { pm with mod_mode = Auto; mod_target = target }
 
     let apply_manual pm value =
-      { pm with mod_mode = Some Manual; mod_value = Some value }
+      { pm with mod_mode = Manual; mod_value = value }
 
     let find_opt pitmasters id =
       List.find_opt (fun pm -> pm.id = id) pitmasters
 
-    let update options ?channel available pm =
-      match find_opt available pm with
-      | None -> ()
-      | Some id ->
+    let update options ?channel pitmaster available =
+      match find_opt available pitmaster with
+      | None ->
+         invalid_arg (Printf.sprintf "pitmaster #%d not available!" pitmaster)
+      | Some pm ->
          let command =
-           unchanged id
+           unchanged pm
            |> apply_channel ?channel
            |> mod_to_json in
-         JSON.pretty_to_string command |> prerr_endline;
          match ThoCurl.post_json options "setpitmaster" command with
            | `Bool true -> ()
            | `Bool false -> failwith "response: false"
@@ -824,6 +829,6 @@ let update_channels common ?all ?range ?min ?max ?push ?beep channels =
     | ch_list -> ch_list in
   List.iter (Channel.update common ?all ?range ?min ?max ?push ?beep available) all_channels
 
-let update_pitmaster common ?channel id =
-  let available = get_data common |> Data.pitmasters_of_json in
-  Pitmaster.update common ?channel available id
+let update_pitmaster common ?channel pitmaster =
+  get_data common |> Data.pitmasters_of_json
+  |> Pitmaster.update common pitmaster ?channel

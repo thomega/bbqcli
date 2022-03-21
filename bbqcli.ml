@@ -91,7 +91,7 @@ module Channels : sig val term : int list Term.t end =
       let open Arg in
       value
       & opt_all (list int) []
-      & info ["c"; "channel"; "ch"] ~docv:"N[,M...]" ~doc
+      & info ["c"; "channel"] ~docv:"N[,M...]" ~doc
 
     (* (int * int) list list *)
     let channel_ranges_arg =
@@ -239,10 +239,28 @@ module Control : Unit_Cmd =
         `S Manpage.s_description;
         `P "Modify the pitmaster status." ] @ Common.man_footer
 
+    let channel_arg =
+      let doc = "Connect the pitmaster to the channel number $(docv)." in
+      let open Arg in
+      value
+      & opt (some int) None
+      & info ["c"; "channel"] ~docv:"CH" ~doc
+
+    let pitmaster_arg =
+      let doc = "Modify the pitmaster number $(docv). \
+                 This is never needed if there is only \
+                 a single pitmaster with number 0." in
+      let open Arg in
+      value
+      & opt int 0
+      & info ["p"; "pitmaster"] ~docv:"PM" ~doc
+
     let term =
       let open Term in
-      const (fun common -> WT.update_pitmaster common ~channel:1 0)
+      const (fun common pitmaster channel -> WT.update_pitmaster common ?channel pitmaster)
       $ Common.term
+      $ pitmaster_arg
+      $ channel_arg
 
     let cmd =
       Cmd.v (Cmd.info "control" ~man) term
