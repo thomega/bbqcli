@@ -255,12 +255,12 @@ module Control : Unit_Cmd =
       & opt int 0
       & info ["p"; "pitmaster"] ~docv:"PM" ~doc
 
-    let last_arg =
-      let doc = "Switch the pitmaster back to the last state." in
+    let recall_arg =
+      let doc = "Switch the pitmaster back to the last active state." in
       let open Arg in
       value
       & flag
-      & info ["l"; "last"] ~doc
+      & info ["r"; "recall"] ~doc
 
     let off_arg =
       let doc = "Switch the pitmaster off." in
@@ -289,12 +289,12 @@ module Control : Unit_Cmd =
 
     let term =
       let open Term in
-      const (fun common pitmaster channel last off auto manual ->
-          WT.update_pitmaster common ?channel ~last ~off ?auto ?manual pitmaster)
+      const (fun common pitmaster channel recall off auto manual ->
+          WT.update_pitmaster common ?channel ~recall ~off ?auto ?manual pitmaster)
       $ Common.term
       $ pitmaster_arg
       $ channel_arg
-      $ last_arg
+      $ recall_arg
       $ off_arg
       $ auto_arg
       $ manual_arg

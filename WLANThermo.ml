@@ -509,7 +509,7 @@ module type Pitmaster =
     val format_header : string list
     val update :
       ThoCurl.options -> ?channel:int -> ?auto:float -> ?manual:int ->
-      last:bool -> off:bool -> int -> t -> unit
+      recall:bool -> off:bool -> int -> t -> unit
   end
 
 module Pitmaster : Pitmaster =
@@ -567,16 +567,22 @@ module Pitmaster : Pitmaster =
 
     let format_header =
       [ "PM#";
-        "Mode";
         "Channel";
-        "PID" ]
+        "Mode";
+        "Target";
+        "Value";
+        "PID";
+        "Last" ]
 
     (* TODO: translate PID using "pid" in /settings *)
     let format pm =
       [ Printf.sprintf "%2d" pm.id;
-        (format_mode pm);
         Printf.sprintf "%2d" pm.channel;
-        Printf.sprintf "%2d" pm.pid ]
+        mode_to_string pm.mode;
+        Printf.sprintf "%5.1f" pm.target;
+        Printf.sprintf "%3d%%" pm.value;
+        Printf.sprintf "%2d" pm.pid;
+        mode_to_string pm.mode_last ]
 
     (* We ignore the entry "type": [ "off", "manual", "auto" ],
        which never changes. *)
@@ -630,8 +636,8 @@ module Pitmaster : Pitmaster =
     let apply_pid pid pm =
       { pm with mod_pid = pid }
 
-    let apply_last last pm =
-      if last then
+    let apply_recall recall pm =
+      if recall then
         { pm with mod_mode = pm.mod_mode_last }
       else
         pm
@@ -663,7 +669,7 @@ module Pitmaster : Pitmaster =
     let find_opt pitmasters id =
       List.find_opt (fun pm -> pm.id = id) pitmasters
 
-    let update options ?channel ?auto ?manual ~last ~off pitmaster available =
+    let update options ?channel ?auto ?manual ~recall ~off pitmaster available =
       match find_opt available pitmaster with
       | None ->
          invalid_arg (Printf.sprintf "pitmaster #%d not available!" pitmaster)
@@ -671,7 +677,7 @@ module Pitmaster : Pitmaster =
          let command =
            unchanged pm
            |> apply_channel ?channel
-           |> apply_last last
+           |> apply_recall recall
            |> apply_off off
            |> apply_auto ?auto
            |> apply_manual ?manual
@@ -857,6 +863,6 @@ let update_channels common ?all ?range ?min ?max ?push ?beep channels =
     | ch_list -> ch_list in
   List.iter (Channel.update common ?all ?range ?min ?max ?push ?beep available) all_channels
 
-let update_pitmaster common ?channel ?auto ?manual ~last ~off pitmaster =
+let update_pitmaster common ?channel ?auto ?manual ~recall ~off pitmaster =
   get_data common |> Data.pitmasters_of_json
-  |> Pitmaster.update common pitmaster ?channel ?auto ?manual ~last ~off
+  |> Pitmaster.update common pitmaster ?channel ?auto ?manual ~recall ~off
