@@ -22,3 +22,6 @@ test:
 clean:
 	dune clean
 	rm -f *~
+
+publish:
+	git push -u github main
