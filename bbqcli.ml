@@ -232,6 +232,24 @@ module Pitmaster : Unit_Cmd =
   end
 
 
+module Control : Unit_Cmd =
+  struct
+
+    let man = [
+        `S Manpage.s_description;
+        `P "Modify the pitmaster status." ] @ Common.man_footer
+
+    let term =
+      let open Term in
+      const (fun common -> WT.update_pitmaster common ~channel:42 0)
+      $ Common.term
+
+    let cmd =
+      Cmd.v (Cmd.info "control" ~man) term
+
+  end
+
+
 module Info : Unit_Cmd =
   struct
 
@@ -443,6 +461,7 @@ module Main : Unit_Cmd =
         [ Temperature.cmd;
           Alarm.cmd;
           Pitmaster.cmd;
+          Control.cmd;
           Monitor.cmd;
           Battery.cmd;
           Data.cmd;
