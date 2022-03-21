@@ -642,14 +642,12 @@ module Pitmaster : Pitmaster =
            unchanged id
            |> apply_channel ?channel
            |> mod_to_json in
-         JSON.pretty_to_string command |> print_endline;
-         ignore options
-         (*
+         JSON.pretty_to_string command |> prerr_endline;
          match ThoCurl.post_json options "setpitmaster" command with
            | `Bool true -> ()
            | `Bool false -> failwith "response: false"
            | response ->
-              failwith ("unexpected: " ^ JSON.to_string response) *)
+              failwith ("unexpected: " ^ JSON.to_string response)
 
   end
 

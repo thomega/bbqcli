@@ -241,7 +241,7 @@ module Control : Unit_Cmd =
 
     let term =
       let open Term in
-      const (fun common -> WT.update_pitmaster common ~channel:42 0)
+      const (fun common -> WT.update_pitmaster common ~channel:1 0)
       $ Common.term
 
     let cmd =
