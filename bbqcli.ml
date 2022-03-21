@@ -237,7 +237,13 @@ module Control : Unit_Cmd =
 
     let man = [
         `S Manpage.s_description;
-        `P "Modify the pitmaster status." ] @ Common.man_footer
+        `P "Modify the pitmaster status.";
+        `S Manpage.s_options;
+        `P "The options --recall, --auto, --manual and --off are \
+            evaluated in that order.  For example, the command";
+        `Pre "  bbqcli -a 99 -o";
+        `P "sets the target temperature to 99 degrees and switches \
+            the pitmaster off."] @ Common.man_footer
 
     let channel_arg =
       let doc = "Connect the pitmaster to the channel number $(docv)." in

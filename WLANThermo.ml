@@ -678,9 +678,9 @@ module Pitmaster : Pitmaster =
            unchanged pm
            |> apply_channel ?channel
            |> apply_recall recall
-           |> apply_off off
            |> apply_auto ?auto
            |> apply_manual ?manual
+           |> apply_off off
            |> mod_to_json in
          match ThoCurl.post_json options "setpitmaster" command with
            | `Bool true -> ()
