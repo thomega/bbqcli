@@ -346,7 +346,8 @@ module Monitor : Unit_Cmd =
 
     (* string option *)
     let format_arg =
-      let doc = "Select the format of the timestamp." in
+      let doc = "Select the format of the timestamp.  One of
+                 \"time\", \"date-time\" or \"seconds\"." in
       let open Arg in
       value
       & opt (some format_enum) ~vopt:(Some Time) None
