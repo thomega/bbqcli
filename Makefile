@@ -28,5 +28,5 @@ docs: README.md
 README.md: all
 	./make_readme > $@
 
-publish: all docs
+publish:
 	git push -u github main

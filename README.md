@@ -27,7 +27,7 @@ see <https://ocaml.org/>.
 
 ## bbqcli
 <!-- Creator     : groff version 1.22.4 -->
-<!-- CreationDate: Mon Mar 21 19:20:11 2022 -->
+<!-- CreationDate: Mon Mar 21 19:25:54 2022 -->
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
 "http://www.w3.org/TR/html4/loose.dtd">
 <html>
@@ -238,7 +238,7 @@ far.</p>
 ## bbqcli temperature
 * * *
 <!-- Creator     : groff version 1.22.4 -->
-<!-- CreationDate: Mon Mar 21 19:20:11 2022 -->
+<!-- CreationDate: Mon Mar 21 19:25:54 2022 -->
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
 "http://www.w3.org/TR/html4/loose.dtd">
 <html>
@@ -462,7 +462,7 @@ WLANTHERMO_HOST</b></p>
 ## bbqcli alarm
 * * *
 <!-- Creator     : groff version 1.22.4 -->
-<!-- CreationDate: Mon Mar 21 19:20:11 2022 -->
+<!-- CreationDate: Mon Mar 21 19:25:54 2022 -->
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
 "http://www.w3.org/TR/html4/loose.dtd">
 <html>
@@ -753,7 +753,7 @@ far.</p>
 ## bbqcli monitor
 * * *
 <!-- Creator     : groff version 1.22.4 -->
-<!-- CreationDate: Mon Mar 21 19:20:11 2022 -->
+<!-- CreationDate: Mon Mar 21 19:25:54 2022 -->
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
 "http://www.w3.org/TR/html4/loose.dtd">
 <html>
@@ -1032,7 +1032,7 @@ far.</p>
 ## bbqcli pitmaster
 * * *
 <!-- Creator     : groff version 1.22.4 -->
-<!-- CreationDate: Mon Mar 21 19:20:11 2022 -->
+<!-- CreationDate: Mon Mar 21 19:25:54 2022 -->
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
 "http://www.w3.org/TR/html4/loose.dtd">
 <html>
@@ -1266,7 +1266,7 @@ far.</p>
 ## bbqcli control
 * * *
 <!-- Creator     : groff version 1.22.4 -->
-<!-- CreationDate: Mon Mar 21 19:20:11 2022 -->
+<!-- CreationDate: Mon Mar 21 19:25:54 2022 -->
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
 "http://www.w3.org/TR/html4/loose.dtd">
 <html>
