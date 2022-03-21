@@ -25,26 +25,8 @@ see <https://ocaml.org/>.
 
 # Man Pages
 
-## bbqcli
-<!-- Creator     : groff version 1.22.4 -->
-<!-- CreationDate: Mon Mar 21 19:25:54 2022 -->
-<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
-"http://www.w3.org/TR/html4/loose.dtd">
-<html>
-<head>
-<meta name="generator" content="groff -Thtml, see www.gnu.org">
-<meta http-equiv="Content-Type" content="text/html; charset=US-ASCII">
-<meta name="Content-Style" content="text/css">
-<style type="text/css">
-       p       { margin-top: 0; margin-bottom: 0; vertical-align: top }
-       pre     { margin-top: 0; margin-bottom: 0; vertical-align: top }
-       table   { margin-top: 0; margin-bottom: 0; vertical-align: top }
-       h1      { text-align: center }
-</style>
-<title>BBQCLI</title>
+## bbqcli 
 
-</head>
-<body>
 
 <h1 align="center">BBQCLI</h1>
 
@@ -233,29 +215,10 @@ far.</p>
 <p style="margin-left:11%; margin-top: 1em">Report bugs to
 &lt;ohl@physik.uni-wuerzburg.de&gt;.</p>
 <hr>
-</body>
 </html>
-## bbqcli temperature
-* * *
-<!-- Creator     : groff version 1.22.4 -->
-<!-- CreationDate: Mon Mar 21 19:25:54 2022 -->
-<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
-"http://www.w3.org/TR/html4/loose.dtd">
-<html>
-<head>
-<meta name="generator" content="groff -Thtml, see www.gnu.org">
-<meta http-equiv="Content-Type" content="text/html; charset=US-ASCII">
-<meta name="Content-Style" content="text/css">
-<style type="text/css">
-       p       { margin-top: 0; margin-bottom: 0; vertical-align: top }
-       pre     { margin-top: 0; margin-bottom: 0; vertical-align: top }
-       table   { margin-top: 0; margin-bottom: 0; vertical-align: top }
-       h1      { text-align: center }
-</style>
-<title>BBQCLI-TEMPERATURE</title>
 
-</head>
-<body>
+## bbqcli temperature
+
 
 <h1 align="center">BBQCLI-TEMPERATURE</h1>
 
@@ -456,30 +419,10 @@ WLANTHERMO_HOST</b></p>
  
 <p style="margin-left:11%; margin-top: 1em">bbqcli(1)</p>
 <hr>
-</body>
 </html>
 
 ## bbqcli alarm
-* * *
-<!-- Creator     : groff version 1.22.4 -->
-<!-- CreationDate: Mon Mar 21 19:25:54 2022 -->
-<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
-"http://www.w3.org/TR/html4/loose.dtd">
-<html>
-<head>
-<meta name="generator" content="groff -Thtml, see www.gnu.org">
-<meta http-equiv="Content-Type" content="text/html; charset=US-ASCII">
-<meta name="Content-Style" content="text/css">
-<style type="text/css">
-       p       { margin-top: 0; margin-bottom: 0; vertical-align: top }
-       pre     { margin-top: 0; margin-bottom: 0; vertical-align: top }
-       table   { margin-top: 0; margin-bottom: 0; vertical-align: top }
-       h1      { text-align: center }
-</style>
-<title>BBQCLI-ALARM</title>
 
-</head>
-<body>
 
 <h1 align="center">BBQCLI-ALARM</h1>
 
@@ -747,30 +690,10 @@ far.</p>
 <p style="margin-left:11%; margin-top: 1em">Report bugs to
 &lt;ohl@physik.uni-wuerzburg.de&gt;.</p>
 <hr>
-</body>
 </html>
 
 ## bbqcli monitor
-* * *
-<!-- Creator     : groff version 1.22.4 -->
-<!-- CreationDate: Mon Mar 21 19:25:54 2022 -->
-<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
-"http://www.w3.org/TR/html4/loose.dtd">
-<html>
-<head>
-<meta name="generator" content="groff -Thtml, see www.gnu.org">
-<meta http-equiv="Content-Type" content="text/html; charset=US-ASCII">
-<meta name="Content-Style" content="text/css">
-<style type="text/css">
-       p       { margin-top: 0; margin-bottom: 0; vertical-align: top }
-       pre     { margin-top: 0; margin-bottom: 0; vertical-align: top }
-       table   { margin-top: 0; margin-bottom: 0; vertical-align: top }
-       h1      { text-align: center }
-</style>
-<title>BBQCLI-MONITOR</title>
 
-</head>
-<body>
 
 <h1 align="center">BBQCLI-MONITOR</h1>
 
@@ -1026,30 +949,10 @@ far.</p>
 <p style="margin-left:11%; margin-top: 1em">Report bugs to
 &lt;ohl@physik.uni-wuerzburg.de&gt;.</p>
 <hr>
-</body>
 </html>
 
 ## bbqcli pitmaster
-* * *
-<!-- Creator     : groff version 1.22.4 -->
-<!-- CreationDate: Mon Mar 21 19:25:54 2022 -->
-<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
-"http://www.w3.org/TR/html4/loose.dtd">
-<html>
-<head>
-<meta name="generator" content="groff -Thtml, see www.gnu.org">
-<meta http-equiv="Content-Type" content="text/html; charset=US-ASCII">
-<meta name="Content-Style" content="text/css">
-<style type="text/css">
-       p       { margin-top: 0; margin-bottom: 0; vertical-align: top }
-       pre     { margin-top: 0; margin-bottom: 0; vertical-align: top }
-       table   { margin-top: 0; margin-bottom: 0; vertical-align: top }
-       h1      { text-align: center }
-</style>
-<title>BBQCLI-PITMASTER</title>
 
-</head>
-<body>
 
 <h1 align="center">BBQCLI-PITMASTER</h1>
 
@@ -1260,30 +1163,10 @@ far.</p>
 <p style="margin-left:11%; margin-top: 1em">Report bugs to
 &lt;ohl@physik.uni-wuerzburg.de&gt;.</p>
 <hr>
-</body>
 </html>
 
 ## bbqcli control
-* * *
-<!-- Creator     : groff version 1.22.4 -->
-<!-- CreationDate: Mon Mar 21 19:25:54 2022 -->
-<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
-"http://www.w3.org/TR/html4/loose.dtd">
-<html>
-<head>
-<meta name="generator" content="groff -Thtml, see www.gnu.org">
-<meta http-equiv="Content-Type" content="text/html; charset=US-ASCII">
-<meta name="Content-Style" content="text/css">
-<style type="text/css">
-       p       { margin-top: 0; margin-bottom: 0; vertical-align: top }
-       pre     { margin-top: 0; margin-bottom: 0; vertical-align: top }
-       table   { margin-top: 0; margin-bottom: 0; vertical-align: top }
-       h1      { text-align: center }
-</style>
-<title>BBQCLI-CONTROL</title>
 
-</head>
-<body>
 
 <h1 align="center">BBQCLI-CONTROL</h1>
 
@@ -1545,6 +1428,5 @@ far.</p>
 <p style="margin-left:11%; margin-top: 1em">Report bugs to
 &lt;ohl@physik.uni-wuerzburg.de&gt;.</p>
 <hr>
-</body>
 </html>
 

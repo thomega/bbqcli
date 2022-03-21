@@ -33,13 +33,10 @@ see <https://ocaml.org/>.
 
 # Man Pages
 
-## bbqcli
 EOF
-help2html
-
-for subcmd in temperature alarm monitor pitmaster control; do
+for subcmd in "" temperature alarm monitor pitmaster control; do
   echo "## bbqcli $subcmd"
-  echo "* * *"
-  help2html $subcmd
+  echo
+  help2html $subcmd | sed -e '/Creator/,/<body>/d' -e '/<\/body/d'
   echo
 done
