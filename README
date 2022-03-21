@@ -1,0 +1,70 @@
+NAME
+       bbqcli
+
+SYNOPSIS
+       bbqcli COMMAND …
+
+DESCRIPTION
+       Control a WLANThermo Mini V3 on the command line using the HTTP API.
+
+COMMANDS
+       alarm [OPTION]… 
+
+       battery [OPTION]… 
+
+       control [OPTION]… 
+
+       data [OPTION]… 
+
+       info [OPTION]… 
+
+       monitor [OPTION]… 
+
+       pitmaster [OPTION]… 
+
+       settings [OPTION]… 
+
+       temperature [OPTION]… 
+
+
+COMMON OPTIONS
+       --help[=FMT] (default=auto)
+           Show this help in format FMT. The value FMT must be one of auto,
+           pager, groff or plain. With auto, the format is pager or plain
+           whenever the TERM env var is dumb or undefined.
+
+EXIT STATUS
+       bbqcli exits with the following status:
+
+       0   on success.
+
+       123 on indiscriminate errors reported on standard error.
+
+       124 on command line parsing errors.
+
+       125 on unexpected internal errors (bugs).
+
+EXAMPLES
+         bbqcli alarm -C 3-5 -c 9 -t 80-110 -p on
+
+       Sets the temperature range on channels 3,4,5,9 to [80,110] and
+       switches on the push alert.
+
+         bbqcli temperature -a
+
+       List the temperatures and limits for all channels, including the
+       limits of disconnected channels.
+
+         bbqcli monitor -w 60
+
+       Monitor all temperatures every minute.
+
+FILES
+       None, so far.
+
+AUTHORS
+       Thorsten Ohl <ohl@physik.uni-wuerzburg.de>.
+
+BUGS
+       Report bugs to <ohl@physik.uni-wuerzburg.de>.
+
