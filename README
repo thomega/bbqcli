@@ -1,3 +1,14 @@
+Prerequisites
+
+  - ocaml version 4.08  (earlier versions need some trivial changes)
+
+  - dune
+
+  - cmdliner
+  - ocurl
+  - yojson
+
+
 NAME
        bbqcli
 
