@@ -23,4 +23,5 @@ val update_channels :
   ?push:switch -> ?beep:switch -> int list -> unit
 
 val update_pitmaster :
-  ThoCurl.options -> ?channel:int -> int -> unit
+  ThoCurl.options -> ?channel:int -> ?auto:float -> ?manual:int ->
+  last:bool -> off:bool -> int -> unit

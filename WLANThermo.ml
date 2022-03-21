@@ -508,7 +508,8 @@ module type Pitmaster =
     val format : pm -> string list
     val format_header : string list
     val update :
-      ThoCurl.options -> ?channel:int -> int -> t -> unit
+      ThoCurl.options -> ?channel:int -> ?auto:float -> ?manual:int ->
+      last:bool -> off:bool -> int -> t -> unit
   end
 
 module Pitmaster : Pitmaster =
@@ -561,8 +562,8 @@ module Pitmaster : Pitmaster =
     let format_mode pm =
       match pm.mode with
       | Off -> "off"
-      | Manual -> Printf.sprintf "%3d%% (manual)" pm.value
-      | Auto -> Printf.sprintf "%3d%% target %3f deg" pm.value pm.target
+      | Manual -> Printf.sprintf "manual %3d%%" pm.value
+      | Auto -> Printf.sprintf "auto %3.1f deg / %3d%%" pm.target pm.value
 
     let format_header =
       [ "PM#";
@@ -591,7 +592,8 @@ module Pitmaster : Pitmaster =
         mod_pid: int;
         mod_value: int;
         mod_target: float;
-        mod_mode: mode }
+        mod_mode: mode;
+        mod_mode_last: mode }
 
     let unchanged pm =
       { mod_id = pm.id;
@@ -599,7 +601,8 @@ module Pitmaster : Pitmaster =
         mod_pid = pm.pid;
         mod_value = pm.value;
         mod_target = pm.target;
-        mod_mode = pm.mode }
+        mod_mode = pm.mode;
+        mod_mode_last = pm.mode_last }
 
     let mode_to_json name mode =
       [ name, `String (mode_to_string mode) ]
@@ -627,19 +630,40 @@ module Pitmaster : Pitmaster =
     let apply_pid pid pm =
       { pm with mod_pid = pid }
 
-    let apply_off pm =
-      { pm with mod_mode = Off }
+    let apply_last last pm =
+      if last then
+        { pm with mod_mode = pm.mod_mode_last }
+      else
+        pm
 
-    let apply_auto pm target =
-      { pm with mod_mode = Auto; mod_target = target }
+    let apply_off off pm =
+      if off then
+        { pm with mod_mode = Off }
+      else
+        pm
 
-    let apply_manual pm value =
-      { pm with mod_mode = Manual; mod_value = value }
+    let apply_auto ?auto pm =
+      match auto with
+      | None -> pm
+      | Some target ->
+         if target < 0. then
+           { pm with mod_mode = Auto }
+         else
+           { pm with mod_mode = Auto; mod_target = target }
+
+    let apply_manual ?manual pm =
+      match manual with
+      | None -> pm
+      | Some value ->
+         if value < 0 then
+           { pm with mod_mode = Manual }
+         else
+           { pm with mod_mode = Manual; mod_value = value }
 
     let find_opt pitmasters id =
       List.find_opt (fun pm -> pm.id = id) pitmasters
 
-    let update options ?channel pitmaster available =
+    let update options ?channel ?auto ?manual ~last ~off pitmaster available =
       match find_opt available pitmaster with
       | None ->
          invalid_arg (Printf.sprintf "pitmaster #%d not available!" pitmaster)
@@ -647,6 +671,10 @@ module Pitmaster : Pitmaster =
          let command =
            unchanged pm
            |> apply_channel ?channel
+           |> apply_last last
+           |> apply_off off
+           |> apply_auto ?auto
+           |> apply_manual ?manual
            |> mod_to_json in
          match ThoCurl.post_json options "setpitmaster" command with
            | `Bool true -> ()
@@ -829,6 +857,6 @@ let update_channels common ?all ?range ?min ?max ?push ?beep channels =
     | ch_list -> ch_list in
   List.iter (Channel.update common ?all ?range ?min ?max ?push ?beep available) all_channels
 
-let update_pitmaster common ?channel pitmaster =
+let update_pitmaster common ?channel ?auto ?manual ~last ~off pitmaster =
   get_data common |> Data.pitmasters_of_json
-  |> Pitmaster.update common pitmaster ?channel
+  |> Pitmaster.update common pitmaster ?channel ?auto ?manual ~last ~off

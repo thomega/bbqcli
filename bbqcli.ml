@@ -79,8 +79,8 @@ let all_arg =
   let doc = "Include the inactive channels." in
   let open Arg in
   value
-  & opt bool ~vopt:true false
-  & info ["a"; "all"] ~docv:"true/false" ~doc
+  & flag
+  & info ["a"; "all"] ~doc
 
 module Channels : sig val term : int list Term.t end =
   struct
@@ -255,12 +255,49 @@ module Control : Unit_Cmd =
       & opt int 0
       & info ["p"; "pitmaster"] ~docv:"PM" ~doc
 
+    let last_arg =
+      let doc = "Switch the pitmaster back to the last state." in
+      let open Arg in
+      value
+      & flag
+      & info ["l"; "last"] ~doc
+
+    let off_arg =
+      let doc = "Switch the pitmaster off." in
+      let open Arg in
+      value
+      & flag
+      & info ["o"; "off"] ~doc
+
+    let auto_arg =
+      let doc = "Switch the pitmaster in auto mode with \
+                 target temperature $(docv).  Negative values \
+                 keep the old value unchanged." in
+      let open Arg in
+      value
+      & opt (some float) ~vopt:(Some (-1.)) None
+      & info ["a"; "auto"] ~docv:"T" ~doc
+
+    let manual_arg =
+      let doc = "Switch the pitmaster in manual mode with \
+                 $(docv)% power. Negative values \
+                 keep the old value unchanged." in
+      let open Arg in
+      value
+      & opt (some int) ~vopt:(Some (-1)) None
+      & info ["m"; "manual"] ~docv:"P" ~doc
+
     let term =
       let open Term in
-      const (fun common pitmaster channel -> WT.update_pitmaster common ?channel pitmaster)
+      const (fun common pitmaster channel last off auto manual ->
+          WT.update_pitmaster common ?channel ~last ~off ?auto ?manual pitmaster)
       $ Common.term
       $ pitmaster_arg
       $ channel_arg
+      $ last_arg
+      $ off_arg
+      $ auto_arg
+      $ manual_arg
 
     let cmd =
       Cmd.v (Cmd.info "control" ~man) term
