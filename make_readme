@@ -1,42 +1,15 @@
 #! /bin/sh
+# Combine the auto-generated manpages into a
+# README.md file for github
 
-help2html () {
-  subcmd="$1"
-  dune exec -- ./bbqcli.exe "$subcmd" --help=groff | sed 's/…//g' | groff -Thtml
-}
+cat README.intro
 
-cat <<EOF
-# bbqcli -- a command line interface for WLANThermo
-
-# CAVEAT
-This documentation is *very* incomplete and the code is still in
-*very* much in flux.  Command line options and their semantics can
-change *without notice*.
-
-# Installation
-
-## Prerequisites
-
-### Programming Language
-ocaml 4.08 or later (earlier versions can be made to work too),
-see <https://ocaml.org/>.
-
-### Libraries
-1. cmdliner
-2. ocurl
-3. yojson
-(all are readily available in opam, see <https://opam.ocaml.org/>).
-
-## Compilation
-1. make
-2. make install
-
-# Man Pages
-
-EOF
 for subcmd in "" temperature alarm monitor pitmaster control; do
   echo "## bbqcli $subcmd"
   echo
-  help2html $subcmd | sed -e '/Creator/,/<body>/d' -e '/<\/body/d'
+  dune exec -- ./bbqcli.exe "$subcmd" --help=groff \
+      | sed 's/…//g' \
+      | groff -Thtml \
+      | sed -e '/Creator/,/<body>/d' -e '/<\/body/d'
   echo
 done

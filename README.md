@@ -24,7 +24,6 @@ see <https://ocaml.org/>.
 2. make install
 
 # Man Pages
-
 ## bbqcli 
 
 
