@@ -44,15 +44,19 @@ The software running on the ESP32 processor in the WLANThermo is hosted at GitHu
 ## Prerequisites
 
 ### Programming Language
-ocaml 4.08 or later (earlier versions can be made to work too),
-see <https://ocaml.org>.
+ocaml 4.08 or later, see <https://ocaml.org>.
 
+_NB: Earlier versions can be made to work too by adapting a few changed
+names for standard library functions.  But since version 4.08.0 of ocaml
+was already released in 2019, it's not worth the effort to maintain
+compatibility with older releases until a specific need arises._
 
 ### Libraries
 1. `cmdliner`
 2. `ocurl`
 3. `yojson`
-(all are readily available in opam, see <https://opam.ocaml.org>).
+
+All are readily available in opam, see <https://opam.ocaml.org>.
 
 ## Compilation
 1. `make`
