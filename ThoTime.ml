@@ -1,6 +1,7 @@
 (* ThoTime.ml -- lightweight time manipulations. *)
 
-(* TODO: the time zone wrong sometimes! *)
+(* TODO: the results appear to be correct, but the time zone handling
+   appears to be wrong internally sometimes! *)
 
 type t = float
 

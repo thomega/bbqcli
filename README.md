@@ -5,6 +5,35 @@ This documentation is *very* incomplete and the code is still in
 *very* much in flux.  Command line options and their semantics can
 change *without notice*.
 
+# Purpose
+
+A command line interface to the WLANThermo <https://wlanthermo.de/>
+BBQ thermometer.
+
+## Plans
+
+- provide a local alternative to the public WLANThermo cloud and
+  the the Telegram alerts
+- a watchdog function that send alerts when the wifi connection
+  breaks down
+- scripting the pitmaster parameters
+  - time dependent recipes
+  - PID controller depending on more than one channel
+  - PID tuning
+
+## What Works
+
+- checking and continuously reporting temperatures
+- switching alarms on and off, changing the temperature ranges
+- controlling the pitmaster
+
+## What Doesn't Work Yet:
+
+- scripting language (timing dependence and conditions) for the pitmaster
+- acoustic alarms from the CLI
+- adjusting PID parameters
+- documentation (just a few automatically generated man pages)
+
 # Installation
 
 ## Prerequisites
@@ -13,1420 +42,540 @@ change *without notice*.
 ocaml 4.08 or later (earlier versions can be made to work too),
 see <https://ocaml.org/>.
 
+
 ### Libraries
-1. cmdliner
-2. ocurl
-3. yojson
+1. `cmdliner`
+2. `ocurl`
+3. `yojson`
 (all are readily available in opam, see <https://opam.ocaml.org/>).
 
 ## Compilation
-1. make
-2. make install
+1. `make`
+2. `make install`
+
+# Notes on the Implementation
+
+The program is structured as a single executable with subcommands
+in the style of `git`.  This has two reasons:
+
+- Most of the size of the executable comes from the libraries.  It is
+  more efficient to link them only once.  I didn't want to rely on
+  shared libraries, to be able to build static executables and move
+  them easily to a small always-on device (NAS, Sheeva-Plug, etc.).
+- I wanted to test the corresponding feature of the `cmdliner` library.
 
 # Man Pages
-
 ## bbqcli 
+<pre>
+NAME
+       bbqcli
+
+SYNOPSIS
+       bbqcli COMMAND …
+
+DESCRIPTION
+       Control a WLANThermo Mini V3 on the command line using the HTTP API.
+
+COMMANDS
+       alarm [OPTION]… 
+
+       battery [OPTION]… 
+
+       control [OPTION]… 
+
+       data [OPTION]… 
+
+       info [OPTION]… 
+
+       monitor [OPTION]… 
+
+       pitmaster [OPTION]… 
+
+       settings [OPTION]… 
+
+       temperature [--all] [--channel=N[,M...]] [--channels=FROM-TO]
+       [OPTION]… 
 
 
-<h1 align="center">BBQCLI</h1>
+COMMON OPTIONS
+       --help[=FMT] (default=auto)
+           Show this help in format FMT. The value FMT must be one of auto,
+           pager, groff or plain. With auto, the format is pager or plain
+           whenever the TERM env var is dumb or undefined.
 
-<a href="#NAME">NAME</a><br>
-<a href="#SYNOPSIS">SYNOPSIS</a><br>
-<a href="#DESCRIPTION">DESCRIPTION</a><br>
-<a href="#COMMANDS">COMMANDS</a><br>
-<a href="#COMMON OPTIONS">COMMON OPTIONS</a><br>
-<a href="#EXIT STATUS">EXIT STATUS</a><br>
-<a href="#EXAMPLES">EXAMPLES</a><br>
-<a href="#FILES">FILES</a><br>
-<a href="#AUTHORS">AUTHORS</a><br>
-<a href="#BUGS">BUGS</a><br>
+EXIT STATUS
+       bbqcli exits with the following status:
 
-<hr>
+       0   on success.
 
+       123 on indiscriminate errors reported on standard error.
 
-<h2>NAME
-<a name="NAME"></a>
-</h2>
+       124 on command line parsing errors.
 
+       125 on unexpected internal errors (bugs).
 
-<p style="margin-left:11%; margin-top: 1em">bbqcli</p>
+EXAMPLES
+         bbqcli alarm -C 3-5 -c 9 -t 80-110 -p on
 
-<h2>SYNOPSIS
-<a name="SYNOPSIS"></a>
-</h2>
+       Sets the temperature range on channels 3,4,5,9 to [80,110] and
+       switches on the push alert.
 
+         bbqcli temperature -a
 
-<p style="margin-left:11%; margin-top: 1em"><b>bbqcli</b>
-<i>COMMAND</i></p>
+       List the temperatures and limits for all channels, including the
+       limits of disconnected channels.
 
-<h2>DESCRIPTION
-<a name="DESCRIPTION"></a>
-</h2>
+         bbqcli monitor -w 60
 
+       Monitor all temperatures every minute.
 
-<p style="margin-left:11%; margin-top: 1em">Control a
-WLANThermo Mini V3 on the command line using the HTTP
-API.</p>
+FILES
+       None, so far.
 
-<h2>COMMANDS
-<a name="COMMANDS"></a>
-</h2>
+AUTHORS
+       Thorsten Ohl &lt;ohl@physik.uni-wuerzburg.de&gt;.
 
+BUGS
+       Report bugs to &lt;ohl@physik.uni-wuerzburg.de&gt;.
 
-<p style="margin-left:11%; margin-top: 1em"><b>alarm</b>
-[<i>OPTION</i>] <b><br>
-battery</b> [<i>OPTION</i>] <b><br>
-control</b> [<i>OPTION</i>] <b><br>
-data</b> [<i>OPTION</i>] <b><br>
-info</b> [<i>OPTION</i>] <b><br>
-monitor</b> [<i>OPTION</i>] <b><br>
-pitmaster</b> [<i>OPTION</i>] <b><br>
-settings</b> [<i>OPTION</i>] <b><br>
-temperature</b> [<b>--all</b>]
-[<b>--channel</b>=<i>N[,M...]</i>]
-[<b>--channels</b>=<i>FROM-TO</i>] [<i>OPTION</i>]</p>
-
-<h2>COMMON OPTIONS
-<a name="COMMON OPTIONS"></a>
-</h2>
-
-
-
-<p style="margin-left:11%; margin-top: 1em"><b>--help</b>[=<i>FMT</i>]
-(default=<b>auto</b>)</p>
-
-<p style="margin-left:17%;">Show this help in format
-<i>FMT</i>. The value <i>FMT</i> must be one of <b>auto</b>,
-<b>pager</b>, <b>groff</b> or <b>plain</b>. With
-<b>auto</b>, the format is <b>pager</b> or <b>plain</b>
-whenever the <b>TERM</b> env var is <b>dumb</b> or
-undefined.</p>
-
-<h2>EXIT STATUS
-<a name="EXIT STATUS"></a>
-</h2>
-
-
-<p style="margin-left:11%; margin-top: 1em"><b>bbqcli</b>
-exits with the following status:</p>
-
-<table width="100%" border="0" rules="none" frame="void"
-       cellspacing="0" cellpadding="0">
-<tr valign="top" align="left">
-<td width="11%"></td>
-<td width="4%">
-
-
-<p>0</p></td>
-<td width="2%"></td>
-<td width="80%">
-
-
-<p>on success.</p></td>
-<td width="3%">
-</td></tr>
-<tr valign="top" align="left">
-<td width="11%"></td>
-<td width="4%">
-
-
-<p>123</p></td>
-<td width="2%"></td>
-<td width="80%">
-
-
-<p>on indiscriminate errors reported on standard error.</p></td>
-<td width="3%">
-</td></tr>
-<tr valign="top" align="left">
-<td width="11%"></td>
-<td width="4%">
-
-
-<p>124</p></td>
-<td width="2%"></td>
-<td width="80%">
-
-
-<p>on command line parsing errors.</p></td>
-<td width="3%">
-</td></tr>
-<tr valign="top" align="left">
-<td width="11%"></td>
-<td width="4%">
-
-
-<p>125</p></td>
-<td width="2%"></td>
-<td width="80%">
-
-
-<p>on unexpected internal errors (bugs).</p></td>
-<td width="3%">
-</td></tr>
-</table>
-
-<h2>EXAMPLES
-<a name="EXAMPLES"></a>
-</h2>
-
-
-<p style="margin-left:11%; margin-top: 1em">bbqcli alarm -C
-3-5 -c 9 -t 80-110 -p on</p>
-
-<p style="margin-left:11%; margin-top: 1em">Sets the
-temperature range on channels 3,4,5,9 to [80,110] and
-switches on the push alert.</p>
-
-<p style="margin-left:11%; margin-top: 1em">bbqcli
-temperature -a</p>
-
-<p style="margin-left:11%; margin-top: 1em">List the
-temperatures and limits for all channels, including the
-limits of disconnected channels.</p>
-
-<p style="margin-left:11%; margin-top: 1em">bbqcli monitor
--w 60</p>
-
-<p style="margin-left:11%; margin-top: 1em">Monitor all
-temperatures every minute.</p>
-
-<h2>FILES
-<a name="FILES"></a>
-</h2>
-
-
-<p style="margin-left:11%; margin-top: 1em">None, so
-far.</p>
-
-<h2>AUTHORS
-<a name="AUTHORS"></a>
-</h2>
-
-
-<p style="margin-left:11%; margin-top: 1em">Thorsten Ohl
-&lt;ohl@physik.uni-wuerzburg.de&gt;.</p>
-
-<h2>BUGS
-<a name="BUGS"></a>
-</h2>
-
-
-<p style="margin-left:11%; margin-top: 1em">Report bugs to
-&lt;ohl@physik.uni-wuerzburg.de&gt;.</p>
-<hr>
-</html>
-
+</pre>
 ## bbqcli temperature
+<pre>
+NAME
+       bbqcli-temperature
 
+SYNOPSIS
+       bbqcli temperature [--all] [--channel=N[,M...]] [--channels=FROM-TO]
+       [OPTION]… 
 
-<h1 align="center">BBQCLI-TEMPERATURE</h1>
+OPTIONS
+       -a, --all
+           Include the inactive channels.
 
-<a href="#NAME">NAME</a><br>
-<a href="#SYNOPSIS">SYNOPSIS</a><br>
-<a href="#OPTIONS">OPTIONS</a><br>
-<a href="#COMMON OPTIONS">COMMON OPTIONS</a><br>
-<a href="#EXIT STATUS">EXIT STATUS</a><br>
-<a href="#ENVIRONMENT">ENVIRONMENT</a><br>
-<a href="#SEE ALSO">SEE ALSO</a><br>
+       -C FROM-TO, --channels=FROM-TO
+           Select the channels in the range FROM-TO (can be repeated).
 
-<hr>
+       -c N[,M...], --channel=N[,M...]
+           Select the channel(s) N[,M...] (can be repeated).
 
+COMMON OPTIONS
+       -H HOST, --host=HOST (absent=wlanthermo or WLANTHERMO_HOST env)
+           Connect to the host HOST.
 
-<h2>NAME
-<a name="NAME"></a>
-</h2>
+       --help[=FMT] (default=auto)
+           Show this help in format FMT. The value FMT must be one of auto,
+           pager, groff or plain. With auto, the format is pager or plain
+           whenever the TERM env var is dumb or undefined.
 
+       -s [true/false], --ssl[=true/false] (default=true) (absent=false or
+       WLANTHERMO_SSL env)
+           Use SSL to connect to the host. This option should never be
+           necessary or even used, because WLANThermo does not understand
+           SSL.
 
+       -T SECONDS, --timeout=SECONDS (absent WLANTHERMO_TIMEOUT env)
+           Wait only SECONDS for response.
 
-<p style="margin-left:11%; margin-top: 1em">bbqcli-temperature</p>
+       -v VERBOSITY, --verbosity=VERBOSITY, --verbose=VERBOSITY (absent=0 or
+       WLANTHERMO_VERBOSITY env)
+           Be more verbose.
 
-<h2>SYNOPSIS
-<a name="SYNOPSIS"></a>
-</h2>
+EXIT STATUS
+       temperature exits with the following status:
 
+       0   on success.
 
-<p style="margin-left:11%; margin-top: 1em"><b>bbqcli
-temperature</b> [<b>--all</b>]
-[<b>--channel</b>=<i>N[,M...]</i>]
-[<b>--channels</b>=<i>FROM-TO</i>] [<i>OPTION</i>]</p>
+       123 on indiscriminate errors reported on standard error.
 
-<h2>OPTIONS
-<a name="OPTIONS"></a>
-</h2>
+       124 on command line parsing errors.
 
+       125 on unexpected internal errors (bugs).
 
-<p style="margin-left:11%; margin-top: 1em"><b>-a</b>,
-<b>--all</b></p>
+ENVIRONMENT
+       These environment variables affect the execution of temperature:
 
-<p style="margin-left:17%;">Include the inactive
-channels.</p>
+       WLANTHERMO_HOST
+           See option --host.
 
-<p style="margin-left:11%;"><b>-C</b> <i>FROM-TO</i>,
-<b>--channels</b>=<i>FROM-TO</i></p>
+       WLANTHERMO_SSL
+           See option --ssl.
 
-<p style="margin-left:17%;">Select the channels in the
-range <i>FROM-TO</i> (can be repeated).</p>
+       WLANTHERMO_TIMEOUT
+           See option --timeout.
 
-<p style="margin-left:11%;"><b>-c</b> <i>N[,M...]</i>,
-<b>--channel</b>=<i>N[,M...]</i></p>
+       WLANTHERMO_VERBOSITY
+           See option --verbosity.
 
-<p style="margin-left:17%;">Select the channel(s)
-<i>N[,M...]</i> (can be repeated).</p>
+SEE ALSO
+       bbqcli(1)
 
-<h2>COMMON OPTIONS
-<a name="COMMON OPTIONS"></a>
-</h2>
-
-
-<p style="margin-left:11%; margin-top: 1em"><b>-H</b>
-<i>HOST</i>, <b>--host</b>=<i>HOST</i>
-(absent=<b>wlanthermo</b> or <b>WLANTHERMO_HOST</b> env)</p>
-
-<p style="margin-left:17%;">Connect to the host
-<i>HOST</i>.</p>
-
-<p style="margin-left:11%;"><b>--help</b>[=<i>FMT</i>]
-(default=<b>auto</b>)</p>
-
-<p style="margin-left:17%;">Show this help in format
-<i>FMT</i>. The value <i>FMT</i> must be one of <b>auto</b>,
-<b>pager</b>, <b>groff</b> or <b>plain</b>. With
-<b>auto</b>, the format is <b>pager</b> or <b>plain</b>
-whenever the <b>TERM</b> env var is <b>dumb</b> or
-undefined.</p>
-
-<p style="margin-left:11%;"><b>-s</b> [<i>true/false</i>],
-<b>--ssl</b>[=<i>true/false</i>] (default=<b>true</b>)
-(absent=<b>false</b> or <b><br>
-WLANTHERMO_SSL</b> env)</p>
-
-<p style="margin-left:17%;">Use SSL to connect to the host.
-This option should never be necessary or even used, because
-WLANThermo does not understand SSL.</p>
-
-<p style="margin-left:11%;"><b>-T</b> <i>SECONDS</i>,
-<b>--timeout</b>=<i>SECONDS</i> (absent
-<b>WLANTHERMO_TIMEOUT</b> env)</p>
-
-<p style="margin-left:17%;">Wait only <i>SECONDS</i> for
-response.</p>
-
-<p style="margin-left:11%;"><b>-v</b> <i>VERBOSITY</i>,
-<b>--verbosity</b>=<i>VERBOSITY</i>,
-<b>--verbose</b>=<i>VERBOSITY</i> (absent=<b>0</b> or
-<b><br>
-WLANTHERMO_VERBOSITY</b> env)</p>
-
-<p style="margin-left:17%;">Be more verbose.</p>
-
-<h2>EXIT STATUS
-<a name="EXIT STATUS"></a>
-</h2>
-
-
-
-<p style="margin-left:11%; margin-top: 1em"><b>temperature</b>
-exits with the following status:</p>
-
-<table width="100%" border="0" rules="none" frame="void"
-       cellspacing="0" cellpadding="0">
-<tr valign="top" align="left">
-<td width="11%"></td>
-<td width="4%">
-
-
-<p>0</p></td>
-<td width="2%"></td>
-<td width="80%">
-
-
-<p>on success.</p></td>
-<td width="3%">
-</td></tr>
-<tr valign="top" align="left">
-<td width="11%"></td>
-<td width="4%">
-
-
-<p>123</p></td>
-<td width="2%"></td>
-<td width="80%">
-
-
-<p>on indiscriminate errors reported on standard error.</p></td>
-<td width="3%">
-</td></tr>
-<tr valign="top" align="left">
-<td width="11%"></td>
-<td width="4%">
-
-
-<p>124</p></td>
-<td width="2%"></td>
-<td width="80%">
-
-
-<p>on command line parsing errors.</p></td>
-<td width="3%">
-</td></tr>
-<tr valign="top" align="left">
-<td width="11%"></td>
-<td width="4%">
-
-
-<p>125</p></td>
-<td width="2%"></td>
-<td width="80%">
-
-
-<p>on unexpected internal errors (bugs).</p></td>
-<td width="3%">
-</td></tr>
-</table>
-
-<h2>ENVIRONMENT
-<a name="ENVIRONMENT"></a>
-</h2>
-
-
-<p style="margin-left:11%; margin-top: 1em">These
-environment variables affect the execution of
-<b>temperature</b>: <b><br>
-WLANTHERMO_HOST</b></p>
-
-<p style="margin-left:17%;">See option <b>--host</b>.</p>
-
-<p style="margin-left:11%;"><b>WLANTHERMO_SSL</b></p>
-
-<p style="margin-left:17%;">See option <b>--ssl</b>.</p>
-
-<p style="margin-left:11%;"><b>WLANTHERMO_TIMEOUT</b></p>
-
-<p style="margin-left:17%;">See option
-<b>--timeout</b>.</p>
-
-
-<p style="margin-left:11%;"><b>WLANTHERMO_VERBOSITY</b></p>
-
-<p style="margin-left:17%;">See option
-<b>--verbosity</b>.</p>
-
-<h2>SEE ALSO
-<a name="SEE ALSO"></a>
-</h2>
-
- 
-<p style="margin-left:11%; margin-top: 1em">bbqcli(1)</p>
-<hr>
-</html>
-
+</pre>
 ## bbqcli alarm
+<pre>
+NAME
+       bbqcli-alarm
 
+SYNOPSIS
+       bbqcli alarm [OPTION]… 
 
-<h1 align="center">BBQCLI-ALARM</h1>
+DESCRIPTION
+       Change the temperature limits and associated alarms on a WT Mini V3
+       using the HTTP API.
 
-<a href="#NAME">NAME</a><br>
-<a href="#SYNOPSIS">SYNOPSIS</a><br>
-<a href="#DESCRIPTION">DESCRIPTION</a><br>
-<a href="#OPTIONS">OPTIONS</a><br>
-<a href="#COMMON OPTIONS">COMMON OPTIONS</a><br>
-<a href="#EXIT STATUS">EXIT STATUS</a><br>
-<a href="#ENVIRONMENT">ENVIRONMENT</a><br>
-<a href="#FILES">FILES</a><br>
-<a href="#AUTHORS">AUTHORS</a><br>
-<a href="#SEE ALSO">SEE ALSO</a><br>
-<a href="#BUGS">BUGS</a><br>
+OPTIONS
+       -a, --all
+           Include the inactive channels.
 
-<hr>
+       -b [+|on|-|off], --beep[=+|on|-|off] (default=on)
+           Switch the beep alarm on/off.
 
+       -C FROM-TO, --channels=FROM-TO
+           Select the channels in the range FROM-TO (can be repeated).
 
-<h2>NAME
-<a name="NAME"></a>
-</h2>
+       -c N[,M...], --channel=N[,M...]
+           Select the channel(s) N[,M...] (can be repeated).
 
+       -M MAX, --max=MAX
+           Select the upper temperature limit MAX. This takes precedence over
+           upper limit of a range specified in --temperature.
 
+       -m MIN, --min=MIN
+           Select the lower temperature limit MIN. This takes precedence over
+           the lower limit of a range specified in --temperature.
 
-<p style="margin-left:11%; margin-top: 1em">bbqcli-alarm</p>
+       -p [+|on|-|off], --push[=+|on|-|off] (default=on)
+           Switch the push alarm on/off.
 
-<h2>SYNOPSIS
-<a name="SYNOPSIS"></a>
-</h2>
+       -t MIN-MAX, --temperature=MIN-MAX, --temp=MIN-MAX
+           Select the temperature range MIN-MAX.
 
+COMMON OPTIONS
+       -H HOST, --host=HOST (absent=wlanthermo or WLANTHERMO_HOST env)
+           Connect to the host HOST.
 
-<p style="margin-left:11%; margin-top: 1em"><b>bbqcli
-alarm</b> [<i>OPTION</i>]</p>
+       --help[=FMT] (default=auto)
+           Show this help in format FMT. The value FMT must be one of auto,
+           pager, groff or plain. With auto, the format is pager or plain
+           whenever the TERM env var is dumb or undefined.
 
-<h2>DESCRIPTION
-<a name="DESCRIPTION"></a>
-</h2>
+       -s [true/false], --ssl[=true/false] (default=true) (absent=false or
+       WLANTHERMO_SSL env)
+           Use SSL to connect to the host. This option should never be
+           necessary or even used, because WLANThermo does not understand
+           SSL.
 
+       -T SECONDS, --timeout=SECONDS (absent WLANTHERMO_TIMEOUT env)
+           Wait only SECONDS for response.
 
-<p style="margin-left:11%; margin-top: 1em">Change the
-temperature limits and associated alarms on a WT Mini V3
-using the HTTP API.</p>
+       -v VERBOSITY, --verbosity=VERBOSITY, --verbose=VERBOSITY (absent=0 or
+       WLANTHERMO_VERBOSITY env)
+           Be more verbose.
 
-<h2>OPTIONS
-<a name="OPTIONS"></a>
-</h2>
+EXIT STATUS
+       alarm exits with the following status:
 
+       0   on success.
 
-<p style="margin-left:11%; margin-top: 1em"><b>-a</b>,
-<b>--all</b></p>
+       123 on indiscriminate errors reported on standard error.
 
-<p style="margin-left:17%;">Include the inactive
-channels.</p>
+       124 on command line parsing errors.
 
-<p style="margin-left:11%;"><b>-b</b> [<i>+|on|-|off</i>],
-<b>--beep</b>[=<i>+|on|-|off</i>] (default=<b>on</b>)</p>
+       125 on unexpected internal errors (bugs).
 
-<p style="margin-left:17%;">Switch the beep alarm
-on/off.</p>
+ENVIRONMENT
+       These environment variables affect the execution of alarm:
 
-<p style="margin-left:11%;"><b>-C</b> <i>FROM-TO</i>,
-<b>--channels</b>=<i>FROM-TO</i></p>
+       WLANTHERMO_HOST
+           See option --host.
 
-<p style="margin-left:17%;">Select the channels in the
-range <i>FROM-TO</i> (can be repeated).</p>
+       WLANTHERMO_SSL
+           See option --ssl.
 
-<p style="margin-left:11%;"><b>-c</b> <i>N[,M...]</i>,
-<b>--channel</b>=<i>N[,M...]</i></p>
+       WLANTHERMO_TIMEOUT
+           See option --timeout.
 
-<p style="margin-left:17%;">Select the channel(s)
-<i>N[,M...]</i> (can be repeated).</p>
+       WLANTHERMO_VERBOSITY
+           See option --verbosity.
 
-<p style="margin-left:11%;"><b>-M</b> <i>MAX</i>,
-<b>--max</b>=<i>MAX</i></p>
+FILES
+       None, so far.
 
-<p style="margin-left:17%;">Select the upper temperature
-limit <i>MAX</i>. This takes precedence over upper limit of
-a range specified in --temperature.</p>
+AUTHORS
+       Thorsten Ohl &lt;ohl@physik.uni-wuerzburg.de&gt;.
 
-<p style="margin-left:11%;"><b>-m</b> <i>MIN</i>,
-<b>--min</b>=<i>MIN</i></p>
+SEE ALSO
+       bbqcli(1)
 
-<p style="margin-left:17%;">Select the lower temperature
-limit <i>MIN</i>. This takes precedence over the lower limit
-of a range specified in --temperature.</p>
+BUGS
+       Report bugs to &lt;ohl@physik.uni-wuerzburg.de&gt;.
 
-<p style="margin-left:11%;"><b>-p</b> [<i>+|on|-|off</i>],
-<b>--push</b>[=<i>+|on|-|off</i>] (default=<b>on</b>)</p>
-
-<p style="margin-left:17%;">Switch the push alarm
-on/off.</p>
-
-<p style="margin-left:11%;"><b>-t</b> <i>MIN-MAX</i>,
-<b>--temperature</b>=<i>MIN-MAX</i>,
-<b>--temp</b>=<i>MIN-MAX</i></p>
-
-<p style="margin-left:17%;">Select the temperature range
-<i>MIN-MAX</i>.</p>
-
-<h2>COMMON OPTIONS
-<a name="COMMON OPTIONS"></a>
-</h2>
-
-
-<p style="margin-left:11%; margin-top: 1em"><b>-H</b>
-<i>HOST</i>, <b>--host</b>=<i>HOST</i>
-(absent=<b>wlanthermo</b> or <b>WLANTHERMO_HOST</b> env)</p>
-
-<p style="margin-left:17%;">Connect to the host
-<i>HOST</i>.</p>
-
-<p style="margin-left:11%;"><b>--help</b>[=<i>FMT</i>]
-(default=<b>auto</b>)</p>
-
-<p style="margin-left:17%;">Show this help in format
-<i>FMT</i>. The value <i>FMT</i> must be one of <b>auto</b>,
-<b>pager</b>, <b>groff</b> or <b>plain</b>. With
-<b>auto</b>, the format is <b>pager</b> or <b>plain</b>
-whenever the <b>TERM</b> env var is <b>dumb</b> or
-undefined.</p>
-
-<p style="margin-left:11%;"><b>-s</b> [<i>true/false</i>],
-<b>--ssl</b>[=<i>true/false</i>] (default=<b>true</b>)
-(absent=<b>false</b> or <b><br>
-WLANTHERMO_SSL</b> env)</p>
-
-<p style="margin-left:17%;">Use SSL to connect to the host.
-This option should never be necessary or even used, because
-WLANThermo does not understand SSL.</p>
-
-<p style="margin-left:11%;"><b>-T</b> <i>SECONDS</i>,
-<b>--timeout</b>=<i>SECONDS</i> (absent
-<b>WLANTHERMO_TIMEOUT</b> env)</p>
-
-<p style="margin-left:17%;">Wait only <i>SECONDS</i> for
-response.</p>
-
-<p style="margin-left:11%;"><b>-v</b> <i>VERBOSITY</i>,
-<b>--verbosity</b>=<i>VERBOSITY</i>,
-<b>--verbose</b>=<i>VERBOSITY</i> (absent=<b>0</b> or
-<b><br>
-WLANTHERMO_VERBOSITY</b> env)</p>
-
-<p style="margin-left:17%;">Be more verbose.</p>
-
-<h2>EXIT STATUS
-<a name="EXIT STATUS"></a>
-</h2>
-
-
-<p style="margin-left:11%; margin-top: 1em"><b>alarm</b>
-exits with the following status:</p>
-
-<table width="100%" border="0" rules="none" frame="void"
-       cellspacing="0" cellpadding="0">
-<tr valign="top" align="left">
-<td width="11%"></td>
-<td width="4%">
-
-
-<p>0</p></td>
-<td width="2%"></td>
-<td width="80%">
-
-
-<p>on success.</p></td>
-<td width="3%">
-</td></tr>
-<tr valign="top" align="left">
-<td width="11%"></td>
-<td width="4%">
-
-
-<p>123</p></td>
-<td width="2%"></td>
-<td width="80%">
-
-
-<p>on indiscriminate errors reported on standard error.</p></td>
-<td width="3%">
-</td></tr>
-<tr valign="top" align="left">
-<td width="11%"></td>
-<td width="4%">
-
-
-<p>124</p></td>
-<td width="2%"></td>
-<td width="80%">
-
-
-<p>on command line parsing errors.</p></td>
-<td width="3%">
-</td></tr>
-<tr valign="top" align="left">
-<td width="11%"></td>
-<td width="4%">
-
-
-<p>125</p></td>
-<td width="2%"></td>
-<td width="80%">
-
-
-<p>on unexpected internal errors (bugs).</p></td>
-<td width="3%">
-</td></tr>
-</table>
-
-<h2>ENVIRONMENT
-<a name="ENVIRONMENT"></a>
-</h2>
-
-
-<p style="margin-left:11%; margin-top: 1em">These
-environment variables affect the execution of <b>alarm</b>:
-<b><br>
-WLANTHERMO_HOST</b></p>
-
-<p style="margin-left:17%;">See option <b>--host</b>.</p>
-
-<p style="margin-left:11%;"><b>WLANTHERMO_SSL</b></p>
-
-<p style="margin-left:17%;">See option <b>--ssl</b>.</p>
-
-<p style="margin-left:11%;"><b>WLANTHERMO_TIMEOUT</b></p>
-
-<p style="margin-left:17%;">See option
-<b>--timeout</b>.</p>
-
-
-<p style="margin-left:11%;"><b>WLANTHERMO_VERBOSITY</b></p>
-
-<p style="margin-left:17%;">See option
-<b>--verbosity</b>.</p>
-
-<h2>FILES
-<a name="FILES"></a>
-</h2>
-
-
-<p style="margin-left:11%; margin-top: 1em">None, so
-far.</p>
-
-<h2>AUTHORS
-<a name="AUTHORS"></a>
-</h2>
-
-
-<p style="margin-left:11%; margin-top: 1em">Thorsten Ohl
-&lt;ohl@physik.uni-wuerzburg.de&gt;.</p>
-
-<h2>SEE ALSO
-<a name="SEE ALSO"></a>
-</h2>
-
-
-<p style="margin-left:11%; margin-top: 1em">bbqcli(1)</p>
-
-<h2>BUGS
-<a name="BUGS"></a>
-</h2>
-
-
-<p style="margin-left:11%; margin-top: 1em">Report bugs to
-&lt;ohl@physik.uni-wuerzburg.de&gt;.</p>
-<hr>
-</html>
-
+</pre>
 ## bbqcli monitor
+<pre>
+NAME
+       bbqcli-monitor
 
+SYNOPSIS
+       bbqcli monitor [OPTION]… 
 
-<h1 align="center">BBQCLI-MONITOR</h1>
+DESCRIPTION
+       Continuously monitor the WLANThermo.
 
-<a href="#NAME">NAME</a><br>
-<a href="#SYNOPSIS">SYNOPSIS</a><br>
-<a href="#DESCRIPTION">DESCRIPTION</a><br>
-<a href="#OPTIONS">OPTIONS</a><br>
-<a href="#COMMON OPTIONS">COMMON OPTIONS</a><br>
-<a href="#EXIT STATUS">EXIT STATUS</a><br>
-<a href="#ENVIRONMENT">ENVIRONMENT</a><br>
-<a href="#FILES">FILES</a><br>
-<a href="#AUTHORS">AUTHORS</a><br>
-<a href="#SEE ALSO">SEE ALSO</a><br>
-<a href="#BUGS">BUGS</a><br>
+OPTIONS
+       -C FROM-TO, --channels=FROM-TO
+           Select the channels in the range FROM-TO (can be repeated).
 
-<hr>
+       -c N[,M...], --channel=N[,M...]
+           Select the channel(s) N[,M...] (can be repeated).
 
+       -E [TIME], --epoch[=TIME] (default=)
+           Print time passed since TIME. An empty string means now. Otherwise
+           it must be given in the format "HH:MM" or "HH:MM:SS".
 
-<h2>NAME
-<a name="NAME"></a>
-</h2>
+       -F [FORMAT], --format[=FORMAT] (default=time)
+           Select the format of the timestamp. One of "time", "date-time" or
+           "seconds".
 
+       -n N, --number=N (absent=0)
+           Stop after N measurements. A negative value or 0 will let the
+           monitoring contine indefinitely.
 
+       -w SEC, --wait=SEC (absent=10)
+           Wait SEC seconds between measurements. A negative value or 0 will
+           be mapped to 1.
 
-<p style="margin-left:11%; margin-top: 1em">bbqcli-monitor</p>
+COMMON OPTIONS
+       -H HOST, --host=HOST (absent=wlanthermo or WLANTHERMO_HOST env)
+           Connect to the host HOST.
 
-<h2>SYNOPSIS
-<a name="SYNOPSIS"></a>
-</h2>
+       --help[=FMT] (default=auto)
+           Show this help in format FMT. The value FMT must be one of auto,
+           pager, groff or plain. With auto, the format is pager or plain
+           whenever the TERM env var is dumb or undefined.
 
+       -s [true/false], --ssl[=true/false] (default=true) (absent=false or
+       WLANTHERMO_SSL env)
+           Use SSL to connect to the host. This option should never be
+           necessary or even used, because WLANThermo does not understand
+           SSL.
 
-<p style="margin-left:11%; margin-top: 1em"><b>bbqcli
-monitor</b> [<i>OPTION</i>]</p>
+       -T SECONDS, --timeout=SECONDS (absent WLANTHERMO_TIMEOUT env)
+           Wait only SECONDS for response.
 
-<h2>DESCRIPTION
-<a name="DESCRIPTION"></a>
-</h2>
+       -v VERBOSITY, --verbosity=VERBOSITY, --verbose=VERBOSITY (absent=0 or
+       WLANTHERMO_VERBOSITY env)
+           Be more verbose.
 
+EXIT STATUS
+       monitor exits with the following status:
 
-<p style="margin-left:11%; margin-top: 1em">Continuously
-monitor the WLANThermo.</p>
+       0   on success.
 
-<h2>OPTIONS
-<a name="OPTIONS"></a>
-</h2>
+       123 on indiscriminate errors reported on standard error.
 
+       124 on command line parsing errors.
 
-<p style="margin-left:11%; margin-top: 1em"><b>-C</b>
-<i>FROM-TO</i>, <b>--channels</b>=<i>FROM-TO</i></p>
+       125 on unexpected internal errors (bugs).
 
-<p style="margin-left:17%;">Select the channels in the
-range <i>FROM-TO</i> (can be repeated).</p>
+ENVIRONMENT
+       These environment variables affect the execution of monitor:
 
-<p style="margin-left:11%;"><b>-c</b> <i>N[,M...]</i>,
-<b>--channel</b>=<i>N[,M...]</i></p>
+       WLANTHERMO_HOST
+           See option --host.
 
-<p style="margin-left:17%;">Select the channel(s)
-<i>N[,M...]</i> (can be repeated).</p>
+       WLANTHERMO_SSL
+           See option --ssl.
 
-<p style="margin-left:11%;"><b>-E</b> [<i>TIME</i>],
-<b>--epoch</b>[=<i>TIME</i>] (default=)</p>
+       WLANTHERMO_TIMEOUT
+           See option --timeout.
 
-<p style="margin-left:17%;">Print time passed since
-<i>TIME</i>. An empty string means now. Otherwise it must be
-given in the format &quot;HH:MM&quot; or
-&quot;HH:MM:SS&quot;.</p>
+       WLANTHERMO_VERBOSITY
+           See option --verbosity.
 
-<p style="margin-left:11%;"><b>-F</b> [<i>FORMAT</i>],
-<b>--format</b>[=<i>FORMAT</i>] (default=<b>time</b>)</p>
+FILES
+       None, so far.
 
-<p style="margin-left:17%;">Select the format of the
-timestamp. One of &quot;time&quot;, &quot;date-time&quot; or
-&quot;seconds&quot;.</p>
+AUTHORS
+       Thorsten Ohl &lt;ohl@physik.uni-wuerzburg.de&gt;.
 
-<p style="margin-left:11%;"><b>-n</b> <i>N</i>,
-<b>--number</b>=<i>N</i> (absent=<b>0</b>)</p>
+SEE ALSO
+       bbqcli(1)
 
-<p style="margin-left:17%;">Stop after <i>N</i>
-measurements. A negative value or 0 will let the monitoring
-contine indefinitely.</p>
+BUGS
+       Report bugs to &lt;ohl@physik.uni-wuerzburg.de&gt;.
 
-<p style="margin-left:11%;"><b>-w</b> <i>SEC</i>,
-<b>--wait</b>=<i>SEC</i> (absent=<b>10</b>)</p>
-
-<p style="margin-left:17%;">Wait <i>SEC</i> seconds between
-measurements. A negative value or 0 will be mapped to 1.</p>
-
-<h2>COMMON OPTIONS
-<a name="COMMON OPTIONS"></a>
-</h2>
-
-
-<p style="margin-left:11%; margin-top: 1em"><b>-H</b>
-<i>HOST</i>, <b>--host</b>=<i>HOST</i>
-(absent=<b>wlanthermo</b> or <b>WLANTHERMO_HOST</b> env)</p>
-
-<p style="margin-left:17%;">Connect to the host
-<i>HOST</i>.</p>
-
-<p style="margin-left:11%;"><b>--help</b>[=<i>FMT</i>]
-(default=<b>auto</b>)</p>
-
-<p style="margin-left:17%;">Show this help in format
-<i>FMT</i>. The value <i>FMT</i> must be one of <b>auto</b>,
-<b>pager</b>, <b>groff</b> or <b>plain</b>. With
-<b>auto</b>, the format is <b>pager</b> or <b>plain</b>
-whenever the <b>TERM</b> env var is <b>dumb</b> or
-undefined.</p>
-
-<p style="margin-left:11%;"><b>-s</b> [<i>true/false</i>],
-<b>--ssl</b>[=<i>true/false</i>] (default=<b>true</b>)
-(absent=<b>false</b> or <b><br>
-WLANTHERMO_SSL</b> env)</p>
-
-<p style="margin-left:17%;">Use SSL to connect to the host.
-This option should never be necessary or even used, because
-WLANThermo does not understand SSL.</p>
-
-<p style="margin-left:11%;"><b>-T</b> <i>SECONDS</i>,
-<b>--timeout</b>=<i>SECONDS</i> (absent
-<b>WLANTHERMO_TIMEOUT</b> env)</p>
-
-<p style="margin-left:17%;">Wait only <i>SECONDS</i> for
-response.</p>
-
-<p style="margin-left:11%;"><b>-v</b> <i>VERBOSITY</i>,
-<b>--verbosity</b>=<i>VERBOSITY</i>,
-<b>--verbose</b>=<i>VERBOSITY</i> (absent=<b>0</b> or
-<b><br>
-WLANTHERMO_VERBOSITY</b> env)</p>
-
-<p style="margin-left:17%;">Be more verbose.</p>
-
-<h2>EXIT STATUS
-<a name="EXIT STATUS"></a>
-</h2>
-
-
-<p style="margin-left:11%; margin-top: 1em"><b>monitor</b>
-exits with the following status:</p>
-
-<table width="100%" border="0" rules="none" frame="void"
-       cellspacing="0" cellpadding="0">
-<tr valign="top" align="left">
-<td width="11%"></td>
-<td width="4%">
-
-
-<p>0</p></td>
-<td width="2%"></td>
-<td width="80%">
-
-
-<p>on success.</p></td>
-<td width="3%">
-</td></tr>
-<tr valign="top" align="left">
-<td width="11%"></td>
-<td width="4%">
-
-
-<p>123</p></td>
-<td width="2%"></td>
-<td width="80%">
-
-
-<p>on indiscriminate errors reported on standard error.</p></td>
-<td width="3%">
-</td></tr>
-<tr valign="top" align="left">
-<td width="11%"></td>
-<td width="4%">
-
-
-<p>124</p></td>
-<td width="2%"></td>
-<td width="80%">
-
-
-<p>on command line parsing errors.</p></td>
-<td width="3%">
-</td></tr>
-<tr valign="top" align="left">
-<td width="11%"></td>
-<td width="4%">
-
-
-<p>125</p></td>
-<td width="2%"></td>
-<td width="80%">
-
-
-<p>on unexpected internal errors (bugs).</p></td>
-<td width="3%">
-</td></tr>
-</table>
-
-<h2>ENVIRONMENT
-<a name="ENVIRONMENT"></a>
-</h2>
-
-
-<p style="margin-left:11%; margin-top: 1em">These
-environment variables affect the execution of
-<b>monitor</b>: <b><br>
-WLANTHERMO_HOST</b></p>
-
-<p style="margin-left:17%;">See option <b>--host</b>.</p>
-
-<p style="margin-left:11%;"><b>WLANTHERMO_SSL</b></p>
-
-<p style="margin-left:17%;">See option <b>--ssl</b>.</p>
-
-<p style="margin-left:11%;"><b>WLANTHERMO_TIMEOUT</b></p>
-
-<p style="margin-left:17%;">See option
-<b>--timeout</b>.</p>
-
-
-<p style="margin-left:11%;"><b>WLANTHERMO_VERBOSITY</b></p>
-
-<p style="margin-left:17%;">See option
-<b>--verbosity</b>.</p>
-
-<h2>FILES
-<a name="FILES"></a>
-</h2>
-
-
-<p style="margin-left:11%; margin-top: 1em">None, so
-far.</p>
-
-<h2>AUTHORS
-<a name="AUTHORS"></a>
-</h2>
-
-
-<p style="margin-left:11%; margin-top: 1em">Thorsten Ohl
-&lt;ohl@physik.uni-wuerzburg.de&gt;.</p>
-
-<h2>SEE ALSO
-<a name="SEE ALSO"></a>
-</h2>
-
-
-<p style="margin-left:11%; margin-top: 1em">bbqcli(1)</p>
-
-<h2>BUGS
-<a name="BUGS"></a>
-</h2>
-
-
-<p style="margin-left:11%; margin-top: 1em">Report bugs to
-&lt;ohl@physik.uni-wuerzburg.de&gt;.</p>
-<hr>
-</html>
-
+</pre>
 ## bbqcli pitmaster
+<pre>
+NAME
+       bbqcli-pitmaster
 
+SYNOPSIS
+       bbqcli pitmaster [OPTION]… 
 
-<h1 align="center">BBQCLI-PITMASTER</h1>
+DESCRIPTION
+       Print the pitmaster status.
 
-<a href="#NAME">NAME</a><br>
-<a href="#SYNOPSIS">SYNOPSIS</a><br>
-<a href="#DESCRIPTION">DESCRIPTION</a><br>
-<a href="#COMMON OPTIONS">COMMON OPTIONS</a><br>
-<a href="#EXIT STATUS">EXIT STATUS</a><br>
-<a href="#ENVIRONMENT">ENVIRONMENT</a><br>
-<a href="#FILES">FILES</a><br>
-<a href="#AUTHORS">AUTHORS</a><br>
-<a href="#SEE ALSO">SEE ALSO</a><br>
-<a href="#BUGS">BUGS</a><br>
+COMMON OPTIONS
+       -H HOST, --host=HOST (absent=wlanthermo or WLANTHERMO_HOST env)
+           Connect to the host HOST.
 
-<hr>
+       --help[=FMT] (default=auto)
+           Show this help in format FMT. The value FMT must be one of auto,
+           pager, groff or plain. With auto, the format is pager or plain
+           whenever the TERM env var is dumb or undefined.
 
+       -s [true/false], --ssl[=true/false] (default=true) (absent=false or
+       WLANTHERMO_SSL env)
+           Use SSL to connect to the host. This option should never be
+           necessary or even used, because WLANThermo does not understand
+           SSL.
 
-<h2>NAME
-<a name="NAME"></a>
-</h2>
+       -T SECONDS, --timeout=SECONDS (absent WLANTHERMO_TIMEOUT env)
+           Wait only SECONDS for response.
 
+       -v VERBOSITY, --verbosity=VERBOSITY, --verbose=VERBOSITY (absent=0 or
+       WLANTHERMO_VERBOSITY env)
+           Be more verbose.
 
+EXIT STATUS
+       pitmaster exits with the following status:
 
-<p style="margin-left:11%; margin-top: 1em">bbqcli-pitmaster</p>
+       0   on success.
 
-<h2>SYNOPSIS
-<a name="SYNOPSIS"></a>
-</h2>
+       123 on indiscriminate errors reported on standard error.
 
+       124 on command line parsing errors.
 
-<p style="margin-left:11%; margin-top: 1em"><b>bbqcli
-pitmaster</b> [<i>OPTION</i>]</p>
+       125 on unexpected internal errors (bugs).
 
-<h2>DESCRIPTION
-<a name="DESCRIPTION"></a>
-</h2>
+ENVIRONMENT
+       These environment variables affect the execution of pitmaster:
 
+       WLANTHERMO_HOST
+           See option --host.
 
-<p style="margin-left:11%; margin-top: 1em">Print the
-pitmaster status.</p>
+       WLANTHERMO_SSL
+           See option --ssl.
 
-<h2>COMMON OPTIONS
-<a name="COMMON OPTIONS"></a>
-</h2>
+       WLANTHERMO_TIMEOUT
+           See option --timeout.
 
+       WLANTHERMO_VERBOSITY
+           See option --verbosity.
 
-<p style="margin-left:11%; margin-top: 1em"><b>-H</b>
-<i>HOST</i>, <b>--host</b>=<i>HOST</i>
-(absent=<b>wlanthermo</b> or <b>WLANTHERMO_HOST</b> env)</p>
+FILES
+       None, so far.
 
-<p style="margin-left:17%;">Connect to the host
-<i>HOST</i>.</p>
+AUTHORS
+       Thorsten Ohl &lt;ohl@physik.uni-wuerzburg.de&gt;.
 
-<p style="margin-left:11%;"><b>--help</b>[=<i>FMT</i>]
-(default=<b>auto</b>)</p>
+SEE ALSO
+       bbqcli(1)
 
-<p style="margin-left:17%;">Show this help in format
-<i>FMT</i>. The value <i>FMT</i> must be one of <b>auto</b>,
-<b>pager</b>, <b>groff</b> or <b>plain</b>. With
-<b>auto</b>, the format is <b>pager</b> or <b>plain</b>
-whenever the <b>TERM</b> env var is <b>dumb</b> or
-undefined.</p>
+BUGS
+       Report bugs to &lt;ohl@physik.uni-wuerzburg.de&gt;.
 
-<p style="margin-left:11%;"><b>-s</b> [<i>true/false</i>],
-<b>--ssl</b>[=<i>true/false</i>] (default=<b>true</b>)
-(absent=<b>false</b> or <b><br>
-WLANTHERMO_SSL</b> env)</p>
-
-<p style="margin-left:17%;">Use SSL to connect to the host.
-This option should never be necessary or even used, because
-WLANThermo does not understand SSL.</p>
-
-<p style="margin-left:11%;"><b>-T</b> <i>SECONDS</i>,
-<b>--timeout</b>=<i>SECONDS</i> (absent
-<b>WLANTHERMO_TIMEOUT</b> env)</p>
-
-<p style="margin-left:17%;">Wait only <i>SECONDS</i> for
-response.</p>
-
-<p style="margin-left:11%;"><b>-v</b> <i>VERBOSITY</i>,
-<b>--verbosity</b>=<i>VERBOSITY</i>,
-<b>--verbose</b>=<i>VERBOSITY</i> (absent=<b>0</b> or
-<b><br>
-WLANTHERMO_VERBOSITY</b> env)</p>
-
-<p style="margin-left:17%;">Be more verbose.</p>
-
-<h2>EXIT STATUS
-<a name="EXIT STATUS"></a>
-</h2>
-
-
-
-<p style="margin-left:11%; margin-top: 1em"><b>pitmaster</b>
-exits with the following status:</p>
-
-<table width="100%" border="0" rules="none" frame="void"
-       cellspacing="0" cellpadding="0">
-<tr valign="top" align="left">
-<td width="11%"></td>
-<td width="4%">
-
-
-<p>0</p></td>
-<td width="2%"></td>
-<td width="80%">
-
-
-<p>on success.</p></td>
-<td width="3%">
-</td></tr>
-<tr valign="top" align="left">
-<td width="11%"></td>
-<td width="4%">
-
-
-<p>123</p></td>
-<td width="2%"></td>
-<td width="80%">
-
-
-<p>on indiscriminate errors reported on standard error.</p></td>
-<td width="3%">
-</td></tr>
-<tr valign="top" align="left">
-<td width="11%"></td>
-<td width="4%">
-
-
-<p>124</p></td>
-<td width="2%"></td>
-<td width="80%">
-
-
-<p>on command line parsing errors.</p></td>
-<td width="3%">
-</td></tr>
-<tr valign="top" align="left">
-<td width="11%"></td>
-<td width="4%">
-
-
-<p>125</p></td>
-<td width="2%"></td>
-<td width="80%">
-
-
-<p>on unexpected internal errors (bugs).</p></td>
-<td width="3%">
-</td></tr>
-</table>
-
-<h2>ENVIRONMENT
-<a name="ENVIRONMENT"></a>
-</h2>
-
-
-<p style="margin-left:11%; margin-top: 1em">These
-environment variables affect the execution of
-<b>pitmaster</b>: <b><br>
-WLANTHERMO_HOST</b></p>
-
-<p style="margin-left:17%;">See option <b>--host</b>.</p>
-
-<p style="margin-left:11%;"><b>WLANTHERMO_SSL</b></p>
-
-<p style="margin-left:17%;">See option <b>--ssl</b>.</p>
-
-<p style="margin-left:11%;"><b>WLANTHERMO_TIMEOUT</b></p>
-
-<p style="margin-left:17%;">See option
-<b>--timeout</b>.</p>
-
-
-<p style="margin-left:11%;"><b>WLANTHERMO_VERBOSITY</b></p>
-
-<p style="margin-left:17%;">See option
-<b>--verbosity</b>.</p>
-
-<h2>FILES
-<a name="FILES"></a>
-</h2>
-
-
-<p style="margin-left:11%; margin-top: 1em">None, so
-far.</p>
-
-<h2>AUTHORS
-<a name="AUTHORS"></a>
-</h2>
-
-
-<p style="margin-left:11%; margin-top: 1em">Thorsten Ohl
-&lt;ohl@physik.uni-wuerzburg.de&gt;.</p>
-
-<h2>SEE ALSO
-<a name="SEE ALSO"></a>
-</h2>
-
-
-<p style="margin-left:11%; margin-top: 1em">bbqcli(1)</p>
-
-<h2>BUGS
-<a name="BUGS"></a>
-</h2>
-
-
-<p style="margin-left:11%; margin-top: 1em">Report bugs to
-&lt;ohl@physik.uni-wuerzburg.de&gt;.</p>
-<hr>
-</html>
-
+</pre>
 ## bbqcli control
+<pre>
+NAME
+       bbqcli-control
 
+SYNOPSIS
+       bbqcli control [OPTION]… 
 
-<h1 align="center">BBQCLI-CONTROL</h1>
+DESCRIPTION
+       Modify the pitmaster status.
 
-<a href="#NAME">NAME</a><br>
-<a href="#SYNOPSIS">SYNOPSIS</a><br>
-<a href="#DESCRIPTION">DESCRIPTION</a><br>
-<a href="#OPTIONS">OPTIONS</a><br>
-<a href="#COMMON OPTIONS">COMMON OPTIONS</a><br>
-<a href="#EXIT STATUS">EXIT STATUS</a><br>
-<a href="#ENVIRONMENT">ENVIRONMENT</a><br>
-<a href="#FILES">FILES</a><br>
-<a href="#AUTHORS">AUTHORS</a><br>
-<a href="#SEE ALSO">SEE ALSO</a><br>
-<a href="#BUGS">BUGS</a><br>
+OPTIONS
+       The options --recall, --auto, --manual and --off are evaluated in that
+       order. For example, the command
 
-<hr>
+         bbqcli -a 99 -o
 
+       sets the target temperature to 99 degrees and switches the pitmaster
+       off.
 
-<h2>NAME
-<a name="NAME"></a>
-</h2>
+       -a [T], --auto[=T] (default=-1.)
+           Switch the pitmaster in auto mode with target temperature T.
+           Negative values keep the old value unchanged.
 
+       -c CH, --channel=CH
+           Connect the pitmaster to the channel number CH.
 
+       -m [P], --manual[=P] (default=-1)
+           Switch the pitmaster in manual mode with P% power. Negative values
+           keep the old value unchanged.
 
-<p style="margin-left:11%; margin-top: 1em">bbqcli-control</p>
+       -o, --off
+           Switch the pitmaster off.
 
-<h2>SYNOPSIS
-<a name="SYNOPSIS"></a>
-</h2>
+       -p PM, --pitmaster=PM (absent=0)
+           Modify the pitmaster number PM. This is never needed if there is
+           only a single pitmaster with number 0.
 
+       -r, --recall
+           Switch the pitmaster back to the last active state.
 
-<p style="margin-left:11%; margin-top: 1em"><b>bbqcli
-control</b> [<i>OPTION</i>]</p>
+COMMON OPTIONS
+       -H HOST, --host=HOST (absent=wlanthermo or WLANTHERMO_HOST env)
+           Connect to the host HOST.
 
-<h2>DESCRIPTION
-<a name="DESCRIPTION"></a>
-</h2>
+       --help[=FMT] (default=auto)
+           Show this help in format FMT. The value FMT must be one of auto,
+           pager, groff or plain. With auto, the format is pager or plain
+           whenever the TERM env var is dumb or undefined.
 
+       -s [true/false], --ssl[=true/false] (default=true) (absent=false or
+       WLANTHERMO_SSL env)
+           Use SSL to connect to the host. This option should never be
+           necessary or even used, because WLANThermo does not understand
+           SSL.
 
-<p style="margin-left:11%; margin-top: 1em">Modify the
-pitmaster status.</p>
+       -T SECONDS, --timeout=SECONDS (absent WLANTHERMO_TIMEOUT env)
+           Wait only SECONDS for response.
 
-<h2>OPTIONS
-<a name="OPTIONS"></a>
-</h2>
+       -v VERBOSITY, --verbosity=VERBOSITY, --verbose=VERBOSITY (absent=0 or
+       WLANTHERMO_VERBOSITY env)
+           Be more verbose.
 
+EXIT STATUS
+       control exits with the following status:
 
-<p style="margin-left:11%; margin-top: 1em">The options
---recall, --auto, --manual and --off are evaluated in that
-order. For example, the command</p>
+       0   on success.
 
-<p style="margin-left:11%; margin-top: 1em">bbqcli -a 99
--o</p>
+       123 on indiscriminate errors reported on standard error.
 
-<p style="margin-left:11%; margin-top: 1em">sets the target
-temperature to 99 degrees and switches the pitmaster off.
-<b><br>
--a</b> [<i>T</i>], <b>--auto</b>[=<i>T</i>]
-(default=<b>-1.</b>)</p>
+       124 on command line parsing errors.
 
-<p style="margin-left:17%;">Switch the pitmaster in auto
-mode with target temperature <i>T</i>. Negative values keep
-the old value unchanged.</p>
+       125 on unexpected internal errors (bugs).
 
-<p style="margin-left:11%;"><b>-c</b> <i>CH</i>,
-<b>--channel</b>=<i>CH</i></p>
+ENVIRONMENT
+       These environment variables affect the execution of control:
 
-<p style="margin-left:17%;">Connect the pitmaster to the
-channel number <i>CH</i>.</p>
+       WLANTHERMO_HOST
+           See option --host.
 
-<p style="margin-left:11%;"><b>-m</b> [<i>P</i>],
-<b>--manual</b>[=<i>P</i>] (default=<b>-1</b>)</p>
+       WLANTHERMO_SSL
+           See option --ssl.
 
-<p style="margin-left:17%;">Switch the pitmaster in manual
-mode with <i>P</i>% power. Negative values keep the old
-value unchanged.</p>
+       WLANTHERMO_TIMEOUT
+           See option --timeout.
 
-<p style="margin-left:11%;"><b>-o</b>, <b>--off</b></p>
+       WLANTHERMO_VERBOSITY
+           See option --verbosity.
 
-<p style="margin-left:17%;">Switch the pitmaster off.</p>
+FILES
+       None, so far.
 
-<p style="margin-left:11%;"><b>-p</b> <i>PM</i>,
-<b>--pitmaster</b>=<i>PM</i> (absent=<b>0</b>)</p>
+AUTHORS
+       Thorsten Ohl &lt;ohl@physik.uni-wuerzburg.de&gt;.
 
-<p style="margin-left:17%;">Modify the pitmaster number
-<i>PM</i>. This is never needed if there is only a single
-pitmaster with number 0.</p>
+SEE ALSO
+       bbqcli(1)
 
-<p style="margin-left:11%;"><b>-r</b>, <b>--recall</b></p>
+BUGS
+       Report bugs to &lt;ohl@physik.uni-wuerzburg.de&gt;.
 
-<p style="margin-left:17%;">Switch the pitmaster back to
-the last active state.</p>
-
-<h2>COMMON OPTIONS
-<a name="COMMON OPTIONS"></a>
-</h2>
-
-
-<p style="margin-left:11%; margin-top: 1em"><b>-H</b>
-<i>HOST</i>, <b>--host</b>=<i>HOST</i>
-(absent=<b>wlanthermo</b> or <b>WLANTHERMO_HOST</b> env)</p>
-
-<p style="margin-left:17%;">Connect to the host
-<i>HOST</i>.</p>
-
-<p style="margin-left:11%;"><b>--help</b>[=<i>FMT</i>]
-(default=<b>auto</b>)</p>
-
-<p style="margin-left:17%;">Show this help in format
-<i>FMT</i>. The value <i>FMT</i> must be one of <b>auto</b>,
-<b>pager</b>, <b>groff</b> or <b>plain</b>. With
-<b>auto</b>, the format is <b>pager</b> or <b>plain</b>
-whenever the <b>TERM</b> env var is <b>dumb</b> or
-undefined.</p>
-
-<p style="margin-left:11%;"><b>-s</b> [<i>true/false</i>],
-<b>--ssl</b>[=<i>true/false</i>] (default=<b>true</b>)
-(absent=<b>false</b> or <b><br>
-WLANTHERMO_SSL</b> env)</p>
-
-<p style="margin-left:17%;">Use SSL to connect to the host.
-This option should never be necessary or even used, because
-WLANThermo does not understand SSL.</p>
-
-<p style="margin-left:11%;"><b>-T</b> <i>SECONDS</i>,
-<b>--timeout</b>=<i>SECONDS</i> (absent
-<b>WLANTHERMO_TIMEOUT</b> env)</p>
-
-<p style="margin-left:17%;">Wait only <i>SECONDS</i> for
-response.</p>
-
-<p style="margin-left:11%;"><b>-v</b> <i>VERBOSITY</i>,
-<b>--verbosity</b>=<i>VERBOSITY</i>,
-<b>--verbose</b>=<i>VERBOSITY</i> (absent=<b>0</b> or
-<b><br>
-WLANTHERMO_VERBOSITY</b> env)</p>
-
-<p style="margin-left:17%;">Be more verbose.</p>
-
-<h2>EXIT STATUS
-<a name="EXIT STATUS"></a>
-</h2>
-
-
-<p style="margin-left:11%; margin-top: 1em"><b>control</b>
-exits with the following status:</p>
-
-<table width="100%" border="0" rules="none" frame="void"
-       cellspacing="0" cellpadding="0">
-<tr valign="top" align="left">
-<td width="11%"></td>
-<td width="4%">
-
-
-<p>0</p></td>
-<td width="2%"></td>
-<td width="80%">
-
-
-<p>on success.</p></td>
-<td width="3%">
-</td></tr>
-<tr valign="top" align="left">
-<td width="11%"></td>
-<td width="4%">
-
-
-<p>123</p></td>
-<td width="2%"></td>
-<td width="80%">
-
-
-<p>on indiscriminate errors reported on standard error.</p></td>
-<td width="3%">
-</td></tr>
-<tr valign="top" align="left">
-<td width="11%"></td>
-<td width="4%">
-
-
-<p>124</p></td>
-<td width="2%"></td>
-<td width="80%">
-
-
-<p>on command line parsing errors.</p></td>
-<td width="3%">
-</td></tr>
-<tr valign="top" align="left">
-<td width="11%"></td>
-<td width="4%">
-
-
-<p>125</p></td>
-<td width="2%"></td>
-<td width="80%">
-
-
-<p>on unexpected internal errors (bugs).</p></td>
-<td width="3%">
-</td></tr>
-</table>
-
-<h2>ENVIRONMENT
-<a name="ENVIRONMENT"></a>
-</h2>
-
-
-<p style="margin-left:11%; margin-top: 1em">These
-environment variables affect the execution of
-<b>control</b>: <b><br>
-WLANTHERMO_HOST</b></p>
-
-<p style="margin-left:17%;">See option <b>--host</b>.</p>
-
-<p style="margin-left:11%;"><b>WLANTHERMO_SSL</b></p>
-
-<p style="margin-left:17%;">See option <b>--ssl</b>.</p>
-
-<p style="margin-left:11%;"><b>WLANTHERMO_TIMEOUT</b></p>
-
-<p style="margin-left:17%;">See option
-<b>--timeout</b>.</p>
-
-
-<p style="margin-left:11%;"><b>WLANTHERMO_VERBOSITY</b></p>
-
-<p style="margin-left:17%;">See option
-<b>--verbosity</b>.</p>
-
-<h2>FILES
-<a name="FILES"></a>
-</h2>
-
-
-<p style="margin-left:11%; margin-top: 1em">None, so
-far.</p>
-
-<h2>AUTHORS
-<a name="AUTHORS"></a>
-</h2>
-
-
-<p style="margin-left:11%; margin-top: 1em">Thorsten Ohl
-&lt;ohl@physik.uni-wuerzburg.de&gt;.</p>
-
-<h2>SEE ALSO
-<a name="SEE ALSO"></a>
-</h2>
-
-
-<p style="margin-left:11%; margin-top: 1em">bbqcli(1)</p>
-
-<h2>BUGS
-<a name="BUGS"></a>
-</h2>
-
-
-<p style="margin-left:11%; margin-top: 1em">Report bugs to
-&lt;ohl@physik.uni-wuerzburg.de&gt;.</p>
-<hr>
-</html>
-
+</pre>

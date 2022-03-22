@@ -29,4 +29,7 @@ README.md: all
 	./make_readme > $@
 
 publish:
+	git checkout main
+	git merge -m "merge master into main for github" master
+	git checkout master
 	git push -u github main
