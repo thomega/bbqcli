@@ -6,10 +6,8 @@ cat README.intro
 
 for subcmd in "" temperature alarm monitor pitmaster control; do
   echo "## bbqcli $subcmd"
-  echo
-  dune exec -- ./bbqcli.exe "$subcmd" --help=groff \
-      | sed 's/…//g' \
-      | groff -Thtml \
-      | sed -e '/Creator/,/<body>/d' -e '/<\/body/d'
-  echo
+  echo "<pre>"
+  dune exec -- ./bbqcli.exe "$subcmd" --help=plain \
+      | sed -e 's/</\&lt;/' -e 's/>/\&gt;/'
+  echo "</pre>"
 done
