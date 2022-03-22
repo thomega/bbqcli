@@ -5,6 +5,35 @@ This documentation is *very* incomplete and the code is still in
 *very* much in flux.  Command line options and their semantics can
 change *without notice*.
 
+# Purpose
+
+A command line interface to the WLANThermo <https://wlanthermo.de/>
+BBQ thermometer.
+
+## Plans
+
+- provide a local alternative to the public WLANThermo cloud and
+  the the Telegram alerts
+- a watchdog function that send alerts when the wifi connection
+  breaks down
+- scripting the pitmaster parameters
+  - time dependent recipes
+  - PID controller depending on more than one channel
+  - PID tuning
+
+## What Works
+
+- checking and continuously reporting temperatures
+- switching alarms on and off, changing the temperature ranges
+- controlling the pitmaster
+
+## What Doesn't Work Yet:
+
+- scripting language (timing dependence and conditions) for the pitmaster
+- acoustic alarms from the CLI
+- adjusting PID parameters
+- documentation (just a few automatically generated man pages)
+
 # Installation
 
 ## Prerequisites
@@ -13,14 +42,26 @@ change *without notice*.
 ocaml 4.08 or later (earlier versions can be made to work too),
 see <https://ocaml.org/>.
 
+
 ### Libraries
-1. cmdliner
-2. ocurl
-3. yojson
+1. `cmdliner`
+2. `ocurl`
+3. `yojson`
 (all are readily available in opam, see <https://opam.ocaml.org/>).
 
 ## Compilation
-1. make
-2. make install
+1. `make`
+2. `make install`
+
+# Notes on the Implementation
+
+The program is structured as a single executable with subcommands
+in the style of `git`.  This has two reasons:
+
+- Most of the size of the executable comes from the libraries.  It is
+  more efficient to link them only once.  I didn't want to rely on
+  shared libraries, to be able to build static executables and move
+  them easily to a small always-on device (NAS, Sheeva-Plug, etc.).
+- I wanted to test the corresponding feature of the `cmdliner` library.
 
 # Man Pages
