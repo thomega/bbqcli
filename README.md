@@ -10,6 +10,11 @@ change *without notice*.
 A command line interface to the WLANThermo <https://wlanthermo.de/>
 BBQ thermometer.
 
+The HTTP API of the WLANThermo employed by `bbqcli` is documented at
+<https://github.com/WLANThermo-nano/WLANThermo_ESP32_Software/wiki/HTTP>.
+The software running on the ESP32 processor in the WLANThermo is hosted at GitHub
+<https://github.com/WLANThermo-nano/WLANThermo_ESP32_Software>.
+
 ## Plans
 
 - provide a local alternative to the public WLANThermo cloud and
@@ -63,6 +68,16 @@ in the style of `git`.  This has two reasons:
   shared libraries, to be able to build static executables and move
   them easily to a small always-on device (NAS, Sheeva-Plug, etc.).
 - I wanted to test the corresponding feature of the `cmdliner` library.
+
+The program is split into the `cmdliner`-based CLI
+<https://github.com/thomega/bbqcli/blob/main/bbqcli.ml>
+that calls functions in the library
+<https://github.com/thomega/bbqcli/blob/main/WLANThermo.ml>.
+
+Note that the inface
+<https://github.com/thomega/bbqcli/blob/main/WLANThermo.mli>
+of this library is *not* yet stable and will change while I implement
+additional features.
 
 # Man Pages
 ## bbqcli 
