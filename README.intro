@@ -7,7 +7,7 @@ change *without notice*.
 
 # Purpose
 
-A command line interface to the WLANThermo <https://wlanthermo.de/>
+A command line interface to the WLANThermo <https://wlanthermo.de>
 BBQ thermometer.
 
 The HTTP API of the WLANThermo employed by `bbqcli` is documented at
@@ -45,14 +45,14 @@ The software running on the ESP32 processor in the WLANThermo is hosted at GitHu
 
 ### Programming Language
 ocaml 4.08 or later (earlier versions can be made to work too),
-see <https://ocaml.org/>.
+see <https://ocaml.org>.
 
 
 ### Libraries
 1. `cmdliner`
 2. `ocurl`
 3. `yojson`
-(all are readily available in opam, see <https://opam.ocaml.org/>).
+(all are readily available in opam, see <https://opam.ocaml.org>).
 
 ## Compilation
 1. `make`
