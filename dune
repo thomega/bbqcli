@@ -4,3 +4,6 @@
   (flags (:standard -w -K))
   (ocamlopt_flags (:standard -inline 32))
   (libraries cmdliner curl yojson))
+
+(ocamllex config_lexer)
+(ocamlyacc config_parser)

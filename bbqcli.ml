@@ -531,5 +531,8 @@ module Main : Unit_Cmd =
 
   end
 
+(* let _ =
+  ignore (Config.of_string "") *)
+
 let () =
   exit (Cmd.eval Main.cmd)
