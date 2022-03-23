@@ -18,7 +18,7 @@ type t = Config_syntax.t
 
 let of_string text =
   try
-    Config_parser.input
+    Config_parser.file
       Config_lexer.token
       (Config_lexer.init_position "" (Lexing.from_string text))
   with

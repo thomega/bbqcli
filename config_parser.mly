@@ -1,7 +1,7 @@
 /* config_parser.mly -- */
 
 %{
-module C = Config
+module C = Config_syntax
 %}
 
 %token < string > ID
@@ -18,6 +18,6 @@ file:
 ;
 
 line:
- | ID EQUALS ID  { ($1, $3) }
+ | ID EQUALS ID  { ($1, String $3) }
 ;
 

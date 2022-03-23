@@ -28,8 +28,7 @@ rule token = parse
     white             { token lexbuf }     (* skip blanks *)
   | '='        	      { EQUALS }
   | char word* as s   { ID s }
-  | _ as c            { failwith ("invalid character `" ^ string_of_char c ^ "'",
-                                  lexbuf.lex_start_p, lexbuf.lex_curr_p) }
+  | _ as c            { failwith ("invalid character `" ^ string_of_char c ^ "'") }
   | eof               { END }
 
 

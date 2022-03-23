@@ -46,10 +46,17 @@ The software running on the ESP32 processor in the WLANThermo is hosted at GitHu
 ### Programming Language
 ocaml 4.08 or later, see <https://ocaml.org>.
 
+Readily available in opam, see <https://opam.ocaml.org>.
+
 _NB: Earlier versions can be made to work too by adapting a few changed
 names for standard library functions.  But since version 4.08.0 of ocaml
 was already released in 2019, it's not worth the effort to maintain
 compatibility with older releases until a specific need arises._
+
+### Build System
+1. dune
+
+Readily available in opam, see <https://opam.ocaml.org>.
 
 ### Libraries
 1. `cmdliner`
