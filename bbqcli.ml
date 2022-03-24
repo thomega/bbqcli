@@ -513,8 +513,8 @@ module Chef : Unit_Cmd =
     (* string *)
     let recipe_arg =
       let doc = "Interpret the string $(docv) as recipe. \
-                 Can be repeated and the result will be combined \
-                 as lines." in
+                 Can be repeated, but each string must be a \
+                 syntactically valid recipe." in
       let open Arg in
       value
       & opt_all string []
@@ -532,26 +532,25 @@ module Chef : Unit_Cmd =
 
     (* string *)
     let recipe_file_arg =
-      let doc = "Interpret the contents of file $(docv) as recipe." in
+      let doc = "Interpret the contents of file $(docv) as recipe. \
+                 Can be repeated, but each file must be a \
+                 syntactically valid recipe." in
       let open Arg in
       value
-      & opt (some string) None
+      & opt_all string []
       & info ["r"; "recipe"] ~docv:"FILE"  ~doc
 
     let term =
       let open Term in
       const
-        (fun common recipe recipe_file ->
+        (fun common recipes recipe_files ->
           ignore common;
-          match recipe, recipe_file with
-          | None, Some name -> Recipe.of_file name |> Recipe.pretty_print
-          | Some s, None -> Recipe.of_string s |> Recipe.pretty_print
-          | None, None ->
-             invalid_arg "no recipe!"
-          | Some _, Some _ ->
-             invalid_arg "can't combine recipes from argumemts and files yet.")
+          let recipe =
+            List.map Recipe.of_string recipes
+            @ List.map Recipe.of_file recipe_files in
+          List.iter Recipe.pretty_print recipe)
       $ Common.term
-      $ recipe_term
+      $ recipe_arg
       $ recipe_file_arg
 
     let cmd =

@@ -627,11 +627,12 @@ DESCRIPTION
 
 OPTIONS
        -r FILE, --recipe=FILE
-           Interpret the contents of file FILE as recipe.
+           Interpret the contents of file FILE as recipe. Can be repeated,
+           but each file must be a syntactically valid recipe.
 
        -R RECIPE, --Recipe=RECIPE
-           Interpret the string RECIPE as recipe. Can be repeated and the
-           result will be combined as lines.
+           Interpret the string RECIPE as recipe. Can be repeated, but each
+           string must be a syntactically valid recipe.
 
 COMMON OPTIONS
        -H HOST, --host=HOST (absent=wlanthermo or WLANTHERMO_HOST env)
