@@ -1,7 +1,7 @@
-(* config_lexer.mll -- *)
+(* recipe_lexer.mll -- *)
 {
 open Lexing
-open Config_parser
+open Recipe_parser
 
 let string_of_char c =
   String.make 1 c
@@ -33,7 +33,7 @@ rule token = parse
   | crlf              { new_line lexbuf; token lexbuf } (* count lines *)
   | '='        	      { EQUALS }
   | char word* as s   { ID s }
-  | _ as c            { raise (Config_syntax.Lexical_Error
+  | _ as c            { raise (Recipe_syntax.Lexical_Error
                                  ("invalid character `" ^ string_of_char c ^ "'",
                                   lexbuf.lex_start_p, lexbuf.lex_curr_p)) }
   | eof               { END }

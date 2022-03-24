@@ -500,6 +500,54 @@ module Monitor : Unit_Cmd =
   end
 
 
+module Chef : Unit_Cmd =
+  struct
+
+    let man = [
+        `S Manpage.s_description;
+        `P "Execute a recipe.";
+        `P "NB: This is purely experimental at the moment and only used \
+            for figuring out features, abstract and concrete syntax. \
+            Don't expect anything to work." ] @ Common.man_footer
+
+    (* string *)
+    let recipe_arg =
+      let doc = "Interpret the string $(docv) as recipe." in
+      let open Arg in
+      value
+      & opt string ""
+      & info ["R"; "Recipe"] ~docv:"RECIPE"  ~doc
+
+    (* string *)
+    let recipe_file_arg =
+      let doc = "Interpret the contents of file $(docv) as recipe." in
+      let open Arg in
+      value
+      & opt string ""
+      & info ["r"; "recipe"] ~docv:"FILE"  ~doc
+
+    let term =
+      let open Term in
+      const
+        (fun common recipe recipe_file ->
+          ignore common;
+          ignore recipe_file;
+          let open Recipe_syntax in
+          let open Printf in
+          List.iter
+            (fun (k, v) ->
+              match v with
+              | String v -> eprintf "%s = \"%s\"\n" k v)
+            (Recipe.of_string recipe))
+      $ Common.term
+      $ recipe_arg
+      $ recipe_file_arg
+
+    let cmd =
+      Cmd.v (Cmd.info "chef" ~man) term
+
+  end
+
 module Main : Unit_Cmd =
   struct
 
@@ -525,17 +573,13 @@ module Main : Unit_Cmd =
           Pitmaster.cmd;
           Control.cmd;
           Monitor.cmd;
+          Chef.cmd;
           Battery.cmd;
           Data.cmd;
           Settings.cmd;
           Info.cmd ]
 
   end
-
-(*
-let _ =
-  Config_file.simple_test ()
- *)
 
 let () =
   exit (Cmd.eval Main.cmd)

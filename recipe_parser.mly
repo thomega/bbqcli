@@ -1,7 +1,7 @@
-/* config_parser.mly -- */
+/* recipe_parser.mly -- */
 
 %{
-module C = Config_syntax
+module C = Recipe_syntax
 %}
 
 %token < string > ID STRING
@@ -9,7 +9,7 @@ module C = Config_syntax
 %token END
 
 %start file
-%type < Config_syntax.t > file
+%type < Recipe_syntax.t > file
 
 %%
 
@@ -18,7 +18,7 @@ file:
 ;
 
 /* maintain the good habit of using left recursion,
-   even though the config files will be small in practice. */
+   even though the recipe files will be small in practice. */
 
 rev_file:
  | /* empty */       { [] }

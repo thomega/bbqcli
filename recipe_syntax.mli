@@ -1,4 +1,4 @@
-(* config_syntax.mli -- configuration file syntax. *)
+(* recipe_syntax.mli -- abstract recipe file syntax. *)
 
 exception Lexical_Error of string * Lexing.position * Lexing.position
 
