@@ -22,13 +22,20 @@ let upper = ['A'-'Z']
 let lower = ['a'-'z']
 let char = upper | lower
 let word = char | digit | '_'
-let white = [' ' '\t' '\n']
+let white = [' ' '\t']
+let esc = ['\'' '"' '\\']
+let crlf = ['\r' '\n']
+let not_crlf = [^'\r' '\n']
 
 rule token = parse
     white             { token lexbuf }     (* skip blanks *)
+  | '#' not_crlf*     { token lexbuf }     (* skip comments *)
+  | crlf              { new_line lexbuf; token lexbuf }
   | '='        	      { EQUALS }
   | char word* as s   { ID s }
-  | _ as c            { failwith ("invalid character `" ^ string_of_char c ^ "'") }
+  | _ as c            { raise (Config_syntax.Lexical_Error
+                                 ("invalid character `" ^ string_of_char c ^ "'",
+                                  lexbuf.lex_start_p, lexbuf.lex_curr_p)) }
   | eof               { END }
 
 
