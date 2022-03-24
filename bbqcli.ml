@@ -512,18 +512,30 @@ module Chef : Unit_Cmd =
 
     (* string *)
     let recipe_arg =
-      let doc = "Interpret the string $(docv) as recipe." in
+      let doc = "Interpret the string $(docv) as recipe. \
+                 Can be repeated and the result will be combined \
+                 as lines." in
       let open Arg in
       value
-      & opt string ""
+      & opt_all string []
       & info ["R"; "Recipe"] ~docv:"RECIPE"  ~doc
+
+    (* Wrap multiple lines. *)
+    let recipe_term =
+      let open Term in
+      const
+        (fun recipe ->
+          match recipe with
+          | [] -> None
+          | lines -> Some (String.concat "\n" lines))
+      $ recipe_arg
 
     (* string *)
     let recipe_file_arg =
       let doc = "Interpret the contents of file $(docv) as recipe." in
       let open Arg in
       value
-      & opt string ""
+      & opt (some string) None
       & info ["r"; "recipe"] ~docv:"FILE"  ~doc
 
     let term =
@@ -531,16 +543,15 @@ module Chef : Unit_Cmd =
       const
         (fun common recipe recipe_file ->
           ignore common;
-          ignore recipe_file;
-          let open Recipe_syntax in
-          let open Printf in
-          List.iter
-            (fun (k, v) ->
-              match v with
-              | String v -> eprintf "%s = \"%s\"\n" k v)
-            (Recipe.of_string recipe))
+          match recipe, recipe_file with
+          | None, Some name -> Recipe.of_file name |> Recipe.pretty_print
+          | Some s, None -> Recipe.of_string s |> Recipe.pretty_print
+          | None, None ->
+             invalid_arg "no recipe!"
+          | Some _, Some _ ->
+             invalid_arg "can't combine recipes from argumemts and files yet.")
       $ Common.term
-      $ recipe_arg
+      $ recipe_term
       $ recipe_file_arg
 
     let cmd =

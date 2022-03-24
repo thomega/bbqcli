@@ -16,11 +16,38 @@ let error_in_file name start_pos end_pos =
 
 type t = Recipe_syntax.t
 
-let of_string text =
+let parse lexbuf =
   try
-    Recipe_parser.file
-      Recipe_lexer.token
-      (Recipe_lexer.init_position "" (Lexing.from_string text))
+    Recipe_parser.file Recipe_lexer.token lexbuf
   with
-  | Parsing.Parse_error ->
-	 invalid_arg ("parse error: " ^ text)
+  | Parsing.Parse_error -> invalid_arg ("parse error")
+
+let lexbuf_of_string text =
+  Lexing.from_string text |> Recipe_lexer.init_position ""
+
+let lexbuf_of_channel filename ic =
+  Lexing.from_channel ic |> Recipe_lexer.init_position filename
+
+let of_string text =
+  lexbuf_of_string text |> parse
+
+let of_channel filename ic =
+  lexbuf_of_channel filename ic |> parse
+
+let of_file = function
+  | "-" -> parse (lexbuf_of_channel "/dev/stdin" stdin)
+  | filename ->
+     let ic = open_in filename in
+     let recipe = lexbuf_of_channel filename ic |> parse in
+     close_in ic;
+     recipe
+
+let pretty_print recipe =
+  let open Recipe_syntax in
+  let open Printf in
+  List.iter
+    (fun (k, v) ->
+      match v with
+      | String v -> eprintf "%s = \"%s\"\n" k v)
+    recipe
+
