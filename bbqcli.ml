@@ -531,10 +531,8 @@ module Main : Unit_Cmd =
 
   end
 
-(*
 let _ =
-  ignore (Config.of_string "foo = bar")
- *)
+  Config_file.simple_test ()
 
 let () =
   exit (Cmd.eval Main.cmd)

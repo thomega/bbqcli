@@ -14,15 +14,15 @@ module C = Config_syntax
 %%
 
 file:
- | rev_file          { List.rev $1 }
+ | rev_file END       { List.rev $1 }
 ;
 
 /* maintain the good habit of using left recursion,
    even though the config files will be small in practice. */
 
 rev_file:
+ | /* empty */       { [] }
  | rev_file line     { $2 :: $1 }
- | END               { [ ] }
 ;
 
 line:

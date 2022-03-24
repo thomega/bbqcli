@@ -28,9 +28,9 @@ let crlf = ['\r' '\n']
 let not_crlf = [^'\r' '\n']
 
 rule token = parse
-    white             { token lexbuf }     (* skip blanks *)
-  | '#' not_crlf*     { token lexbuf }     (* skip comments *)
-  | crlf              { new_line lexbuf; token lexbuf }
+    white             { token lexbuf }                  (* skip blanks *)
+  | '#' not_crlf*     { token lexbuf }                  (* skip comments *)
+  | crlf              { new_line lexbuf; token lexbuf } (* count lines *)
   | '='        	      { EQUALS }
   | char word* as s   { ID s }
   | _ as c            { raise (Config_syntax.Lexical_Error

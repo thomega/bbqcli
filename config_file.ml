@@ -1,4 +1,4 @@
-(* config.ml -- *)
+(* config_file.ml -- *)
 
 let error_in_string text start_pos end_pos =
   let i = max 0 start_pos.Lexing.pos_cnum in
@@ -24,3 +24,15 @@ let of_string text =
   with
   | Parsing.Parse_error ->
 	 invalid_arg ("parse error: " ^ text)
+
+let simple_test () =
+  let open Config_syntax in
+  let open Printf in
+  List.iter
+    (fun (k, v) ->
+      match v with
+      | String v -> eprintf "%s = \"%s\"\n" k v)
+    (of_string "foo = bar\n bar = baz")
+
+let simple_test () =
+  ()
