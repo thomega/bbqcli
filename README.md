@@ -46,10 +46,17 @@ The software running on the ESP32 processor in the WLANThermo is hosted at GitHu
 ### Programming Language
 ocaml 4.08 or later, see <https://ocaml.org>.
 
+Readily available in opam, see <https://opam.ocaml.org>.
+
 _NB: Earlier versions can be made to work too by adapting a few changed
 names for standard library functions.  But since version 4.08.0 of ocaml
 was already released in 2019, it's not worth the effort to maintain
 compatibility with older releases until a specific need arises._
+
+### Build System
+1. dune
+
+Readily available in opam, see <https://opam.ocaml.org>.
 
 ### Libraries
 1. `cmdliner`
@@ -99,6 +106,8 @@ COMMANDS
        alarm [OPTION]… 
 
        battery [OPTION]… 
+
+       chef [--Recipe=RECIPE] [--recipe=FILE] [OPTION]… 
 
        control [OPTION]… 
 
@@ -359,7 +368,7 @@ OPTIONS
            Stop after N measurements. A negative value or 0 will let the
            monitoring contine indefinitely.
 
-       -w SEC, --wait=SEC (absent=10)
+       -w SEC, --wait=SEC (absent=10 or WLANTHERMO_WAIT env)
            Wait SEC seconds between measurements. A negative value or 0 will
            be mapped to 1.
 
@@ -410,6 +419,9 @@ ENVIRONMENT
 
        WLANTHERMO_VERBOSITY
            See option --verbosity.
+
+       WLANTHERMO_WAIT
+           See option --wait.
 
 FILES
        None, so far.
@@ -572,6 +584,90 @@ EXIT STATUS
 
 ENVIRONMENT
        These environment variables affect the execution of control:
+
+       WLANTHERMO_HOST
+           See option --host.
+
+       WLANTHERMO_SSL
+           See option --ssl.
+
+       WLANTHERMO_TIMEOUT
+           See option --timeout.
+
+       WLANTHERMO_VERBOSITY
+           See option --verbosity.
+
+FILES
+       None, so far.
+
+AUTHORS
+       Thorsten Ohl &lt;ohl@physik.uni-wuerzburg.de&gt;.
+
+SEE ALSO
+       bbqcli(1)
+
+BUGS
+       Report bugs to &lt;ohl@physik.uni-wuerzburg.de&gt;.
+
+</pre>
+## bbqcli chef
+<pre>
+NAME
+       bbqcli-chef
+
+SYNOPSIS
+       bbqcli chef [--Recipe=RECIPE] [--recipe=FILE] [OPTION]… 
+
+DESCRIPTION
+       Execute a recipe.
+
+       NB: This is purely experimental at the moment and only used for
+       figuring out features, abstract and concrete syntax. Don't expect
+       anything to work.
+
+OPTIONS
+       -r FILE, --recipe=FILE
+           Interpret the contents of file FILE as recipe.
+
+       -R RECIPE, --Recipe=RECIPE
+           Interpret the string RECIPE as recipe. Can be repeated and the
+           result will be combined as lines.
+
+COMMON OPTIONS
+       -H HOST, --host=HOST (absent=wlanthermo or WLANTHERMO_HOST env)
+           Connect to the host HOST.
+
+       --help[=FMT] (default=auto)
+           Show this help in format FMT. The value FMT must be one of auto,
+           pager, groff or plain. With auto, the format is pager or plain
+           whenever the TERM env var is dumb or undefined.
+
+       -s [true/false], --ssl[=true/false] (default=true) (absent=false or
+       WLANTHERMO_SSL env)
+           Use SSL to connect to the host. This option should never be
+           necessary or even used, because WLANThermo does not understand
+           SSL.
+
+       -T SECONDS, --timeout=SECONDS (absent WLANTHERMO_TIMEOUT env)
+           Wait only SECONDS for response.
+
+       -v VERBOSITY, --verbosity=VERBOSITY, --verbose=VERBOSITY (absent=0 or
+       WLANTHERMO_VERBOSITY env)
+           Be more verbose.
+
+EXIT STATUS
+       chef exits with the following status:
+
+       0   on success.
+
+       123 on indiscriminate errors reported on standard error.
+
+       124 on command line parsing errors.
+
+       125 on unexpected internal errors (bugs).
+
+ENVIRONMENT
+       These environment variables affect the execution of chef:
 
        WLANTHERMO_HOST
            See option --host.
