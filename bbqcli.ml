@@ -410,10 +410,11 @@ module Monitor : Unit_Cmd =
     let wait_arg =
       let doc = "Wait $(docv) seconds between measurements. \
                  A negative value or 0 will be mapped to 1." in
+      let env = Cmd.Env.info "WLANTHERMO_WAIT" in
       let open Arg in
       value
       & opt int 10
-      & info ["w"; "wait"] ~docv:"SEC"  ~doc
+      & info ["w"; "wait"] ~docv:"SEC"  ~doc ~env
 
     type format =
       | Time
@@ -531,8 +532,10 @@ module Main : Unit_Cmd =
 
   end
 
+(*
 let _ =
   Config_file.simple_test ()
+ *)
 
 let () =
   exit (Cmd.eval Main.cmd)
