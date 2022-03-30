@@ -5,5 +5,18 @@
   (ocamlopt_flags (:standard -inline 32))
   (libraries cmdliner curl yojson))
 
+;;; Use the ocaml functions instead of the table based automaton:
+;;; (ocamllex ...) is hardcoded in dune_rules/dune_file.ml
+;;; and there's no way to add the "-ml" option without
+;;; redefining the rule.
+; (rule
+;   (target recipe_lexer.ml)
+;   (deps   recipe_lexer.mll)
+;   (action (chdir %{workspace_root}
+;             (run %{bin:ocamllex} -ml -q -o %{target} %{deps}))))
+;;; Anyway "[...] using it for production lexers is not recommended."
+
 (ocamllex recipe_lexer)
 (ocamlyacc recipe_parser)
+
+(documentation)
