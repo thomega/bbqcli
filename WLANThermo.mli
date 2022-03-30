@@ -5,6 +5,8 @@ module JSON = Yojson.Basic
 type switch = On | Off
 
 val get_data : ThoCurl.options -> JSON.t
+(** [get_data options] requests ["/data"] from the server specified in [options]. *)
+
 val get_info : ThoCurl.options -> string
 val get_settings : ThoCurl.options -> JSON.t
 

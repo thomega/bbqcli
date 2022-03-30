@@ -18,5 +18,3 @@
 
 (ocamllex recipe_lexer)
 (ocamlyacc recipe_parser)
-
-(documentation)

@@ -8,6 +8,7 @@ all:
 	dune build
 
 install:
+	dune build @install
 	dune install --prefix=$(PREFIX)
 
 uninstall:
@@ -24,6 +25,7 @@ clean:
 	rm -f *~
 
 docs: README.md
+	dune build @doc @doc-private
 
 README.md: all
 	./make_readme > $@
