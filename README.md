@@ -7,7 +7,7 @@ change *without notice*.
 
 # Purpose
 
-A command line interface to the WLANThermo <https://wlanthermo.de/>
+A command line interface to the WLANThermo <https://wlanthermo.de>
 BBQ thermometer.
 
 The HTTP API of the WLANThermo employed by `bbqcli` is documented at
@@ -44,15 +44,26 @@ The software running on the ESP32 processor in the WLANThermo is hosted at GitHu
 ## Prerequisites
 
 ### Programming Language
-ocaml 4.08 or later (earlier versions can be made to work too),
-see <https://ocaml.org/>.
+ocaml 4.08 or later, see <https://ocaml.org>.
 
+Readily available in opam, see <https://opam.ocaml.org>.
+
+_NB: Earlier versions can be made to work too by adapting a few changed
+names for standard library functions.  But since version 4.08.0 of ocaml
+was already released in 2019, it's not worth the effort to maintain
+compatibility with older releases until a specific need arises._
+
+### Build System
+1. dune
+
+Readily available in opam, see <https://opam.ocaml.org>.
 
 ### Libraries
 1. `cmdliner`
 2. `ocurl`
 3. `yojson`
-(all are readily available in opam, see <https://opam.ocaml.org/>).
+
+All are readily available in opam, see <https://opam.ocaml.org>.
 
 ## Compilation
 1. `make`
@@ -92,24 +103,26 @@ DESCRIPTION
        Control a WLANThermo Mini V3 on the command line using the HTTP API.
 
 COMMANDS
-       alarm [OPTION]… 
+       alarm [OPTION]…
 
-       battery [OPTION]… 
+       battery [OPTION]…
 
-       control [OPTION]… 
+       chef [--Recipe=RECIPE] [--recipe=FILE] [OPTION]…
 
-       data [OPTION]… 
+       control [OPTION]…
 
-       info [OPTION]… 
+       data [OPTION]…
 
-       monitor [OPTION]… 
+       info [OPTION]…
 
-       pitmaster [OPTION]… 
+       monitor [OPTION]…
 
-       settings [OPTION]… 
+       pitmaster [OPTION]…
+
+       settings [OPTION]…
 
        temperature [--all] [--channel=N[,M...]] [--channels=FROM-TO]
-       [OPTION]… 
+       [OPTION]…
 
 
 COMMON OPTIONS
@@ -161,7 +174,7 @@ NAME
 
 SYNOPSIS
        bbqcli temperature [--all] [--channel=N[,M...]] [--channels=FROM-TO]
-       [OPTION]… 
+       [OPTION]…
 
 OPTIONS
        -a, --all
@@ -231,7 +244,7 @@ NAME
        bbqcli-alarm
 
 SYNOPSIS
-       bbqcli alarm [OPTION]… 
+       bbqcli alarm [OPTION]…
 
 DESCRIPTION
        Change the temperature limits and associated alarms on a WT Mini V3
@@ -331,7 +344,7 @@ NAME
        bbqcli-monitor
 
 SYNOPSIS
-       bbqcli monitor [OPTION]… 
+       bbqcli monitor [OPTION]…
 
 DESCRIPTION
        Continuously monitor the WLANThermo.
@@ -355,7 +368,7 @@ OPTIONS
            Stop after N measurements. A negative value or 0 will let the
            monitoring contine indefinitely.
 
-       -w SEC, --wait=SEC (absent=10)
+       -w SEC, --wait=SEC (absent=10 or WLANTHERMO_WAIT env)
            Wait SEC seconds between measurements. A negative value or 0 will
            be mapped to 1.
 
@@ -407,6 +420,9 @@ ENVIRONMENT
        WLANTHERMO_VERBOSITY
            See option --verbosity.
 
+       WLANTHERMO_WAIT
+           See option --wait.
+
 FILES
        None, so far.
 
@@ -426,7 +442,7 @@ NAME
        bbqcli-pitmaster
 
 SYNOPSIS
-       bbqcli pitmaster [OPTION]… 
+       bbqcli pitmaster [OPTION]…
 
 DESCRIPTION
        Print the pitmaster status.
@@ -498,7 +514,7 @@ NAME
        bbqcli-control
 
 SYNOPSIS
-       bbqcli control [OPTION]… 
+       bbqcli control [OPTION]…
 
 DESCRIPTION
        Modify the pitmaster status.
@@ -568,6 +584,91 @@ EXIT STATUS
 
 ENVIRONMENT
        These environment variables affect the execution of control:
+
+       WLANTHERMO_HOST
+           See option --host.
+
+       WLANTHERMO_SSL
+           See option --ssl.
+
+       WLANTHERMO_TIMEOUT
+           See option --timeout.
+
+       WLANTHERMO_VERBOSITY
+           See option --verbosity.
+
+FILES
+       None, so far.
+
+AUTHORS
+       Thorsten Ohl &lt;ohl@physik.uni-wuerzburg.de&gt;.
+
+SEE ALSO
+       bbqcli(1)
+
+BUGS
+       Report bugs to &lt;ohl@physik.uni-wuerzburg.de&gt;.
+
+</pre>
+## bbqcli chef
+<pre>
+NAME
+       bbqcli-chef
+
+SYNOPSIS
+       bbqcli chef [--Recipe=RECIPE] [--recipe=FILE] [OPTION]…
+
+DESCRIPTION
+       Execute a recipe.
+
+       NB: This is purely experimental at the moment and only used for
+       figuring out features, abstract and concrete syntax. Don't expect
+       anything to work.
+
+OPTIONS
+       -r FILE, --recipe=FILE
+           Interpret the contents of file FILE as recipe. Can be repeated,
+           but each file must be a syntactically valid recipe.
+
+       -R RECIPE, --Recipe=RECIPE
+           Interpret the string RECIPE as recipe. Can be repeated, but each
+           string must be a syntactically valid recipe.
+
+COMMON OPTIONS
+       -H HOST, --host=HOST (absent=wlanthermo or WLANTHERMO_HOST env)
+           Connect to the host HOST.
+
+       --help[=FMT] (default=auto)
+           Show this help in format FMT. The value FMT must be one of auto,
+           pager, groff or plain. With auto, the format is pager or plain
+           whenever the TERM env var is dumb or undefined.
+
+       -s [true/false], --ssl[=true/false] (default=true) (absent=false or
+       WLANTHERMO_SSL env)
+           Use SSL to connect to the host. This option should never be
+           necessary or even used, because WLANThermo does not understand
+           SSL.
+
+       -T SECONDS, --timeout=SECONDS (absent WLANTHERMO_TIMEOUT env)
+           Wait only SECONDS for response.
+
+       -v VERBOSITY, --verbosity=VERBOSITY, --verbose=VERBOSITY (absent=0 or
+       WLANTHERMO_VERBOSITY env)
+           Be more verbose.
+
+EXIT STATUS
+       chef exits with the following status:
+
+       0   on success.
+
+       123 on indiscriminate errors reported on standard error.
+
+       124 on command line parsing errors.
+
+       125 on unexpected internal errors (bugs).
+
+ENVIRONMENT
+       These environment variables affect the execution of chef:
 
        WLANTHERMO_HOST
            See option --host.

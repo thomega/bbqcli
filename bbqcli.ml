@@ -410,10 +410,11 @@ module Monitor : Unit_Cmd =
     let wait_arg =
       let doc = "Wait $(docv) seconds between measurements. \
                  A negative value or 0 will be mapped to 1." in
+      let env = Cmd.Env.info "WLANTHERMO_WAIT" in
       let open Arg in
       value
       & opt int 10
-      & info ["w"; "wait"] ~docv:"SEC"  ~doc
+      & info ["w"; "wait"] ~docv:"SEC"  ~doc ~env
 
     type format =
       | Time
@@ -499,6 +500,64 @@ module Monitor : Unit_Cmd =
   end
 
 
+module Chef : Unit_Cmd =
+  struct
+
+    let man = [
+        `S Manpage.s_description;
+        `P "Execute a recipe.";
+        `P "NB: This is purely experimental at the moment and only used \
+            for figuring out features, abstract and concrete syntax. \
+            Don't expect anything to work." ] @ Common.man_footer
+
+    (* string *)
+    let recipe_arg =
+      let doc = "Interpret the string $(docv) as recipe. \
+                 Can be repeated, but each string must be a \
+                 syntactically valid recipe." in
+      let open Arg in
+      value
+      & opt_all string []
+      & info ["R"; "Recipe"] ~docv:"RECIPE"  ~doc
+
+    (* Wrap multiple lines. *)
+    let recipe_term =
+      let open Term in
+      const
+        (fun recipe ->
+          match recipe with
+          | [] -> None
+          | lines -> Some (String.concat "\n" lines))
+      $ recipe_arg
+
+    (* string *)
+    let recipe_file_arg =
+      let doc = "Interpret the contents of file $(docv) as recipe. \
+                 Can be repeated, but each file must be a \
+                 syntactically valid recipe." in
+      let open Arg in
+      value
+      & opt_all string []
+      & info ["r"; "recipe"] ~docv:"FILE"  ~doc
+
+    let term =
+      let open Term in
+      const
+        (fun common recipes recipe_files ->
+          ignore common;
+          let recipe =
+            List.map Recipe.of_string recipes
+            @ List.map Recipe.of_file recipe_files in
+          List.iter Recipe.pretty_print recipe)
+      $ Common.term
+      $ recipe_arg
+      $ recipe_file_arg
+
+    let cmd =
+      Cmd.v (Cmd.info "chef" ~man) term
+
+  end
+
 module Main : Unit_Cmd =
   struct
 
@@ -524,6 +583,7 @@ module Main : Unit_Cmd =
           Pitmaster.cmd;
           Control.cmd;
           Monitor.cmd;
+          Chef.cmd;
           Battery.cmd;
           Data.cmd;
           Settings.cmd;

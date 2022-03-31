@@ -8,6 +8,7 @@ all:
 	dune build
 
 install:
+	dune build @install
 	dune install --prefix=$(PREFIX)
 
 uninstall:
@@ -23,12 +24,15 @@ clean:
 	dune clean
 	rm -f *~
 
-docs: README.md
+docs: README.md doc
+
+doc:
+	dune build @doc
 
 README.md: all
 	./make_readme > $@
 
-publish:
+publish: docs
 	git checkout main
 	git merge -m "merge master into main for github" master
 	git checkout master
