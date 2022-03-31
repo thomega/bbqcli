@@ -1,4 +1,4 @@
-(* recipe_file.ml -- *)
+(* recipe.ml -- *)
 
 let error_in_string text start_pos end_pos =
   let i = max 0 start_pos.Lexing.pos_cnum in

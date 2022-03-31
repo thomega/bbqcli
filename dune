@@ -9,12 +9,20 @@
 (library
   (name wlanthermo)
   (public_name wlanthermo)
-  (modules WLANThermo Recipe Recipe_syntax Recipe_parser Recipe_lexer
+  (modules WLANThermo
+           Recipe Recipe_syntax Recipe_parser Recipe_lexer
   	   ThoCurl ThoList ThoString ThoTime)
+; (private_modules Recipe_syntax Recipe_parser Recipe_lexer)
   (wrapped false)
   (flags (:standard -w -K))
   (ocamlopt_flags (:standard -inline 32))
   (libraries curl yojson))
+
+(documentation
+ (mld_files index))
+
+(ocamllex recipe_lexer)
+(ocamlyacc recipe_parser)
 
 ;;; Use the ocaml functions instead of the table based automaton:
 ;;; (ocamllex ...) is hardcoded in dune_rules/dune_file.ml
@@ -27,5 +35,3 @@
 ;             (run %{bin:ocamllex} -ml -q -o %{target} %{deps}))))
 ;;; Anyway "[...] using it for production lexers is not recommended."
 
-(ocamllex recipe_lexer)
-(ocamlyacc recipe_parser)
