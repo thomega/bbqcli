@@ -32,7 +32,7 @@ doc:
 README.md: all
 	./make_readme > $@
 
-publish:
+publish: docs
 	git checkout main
 	git merge -m "merge master into main for github" master
 	git checkout master
