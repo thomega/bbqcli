@@ -24,8 +24,10 @@ clean:
 	dune clean
 	rm -f *~
 
-docs: README.md
-	dune build @doc @doc-private
+docs: README.md doc
+
+doc:
+	dune build @doc
 
 README.md: all
 	./make_readme > $@
