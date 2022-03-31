@@ -1,4 +1,7 @@
-(* recipe_file.mli -- *)
+(* recipe.mli *) (** Interpret recipes from a file. *)
+
+(** There is no documentation here, because things are very
+    much in flux ... *)
 
 type t = Recipe_syntax.t
 
