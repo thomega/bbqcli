@@ -2,7 +2,7 @@
 # Combine the auto-generated manpages into a
 # README.md file for github
 
-cat README.intro
+cat share/README.intro
 
 for subcmd in "" temperature alarm monitor pitmaster control chef; do
   echo "## bbqcli $subcmd"
