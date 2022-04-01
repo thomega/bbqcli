@@ -22,10 +22,10 @@ file:
 
 rev_file:
  | /* empty */       { [] }
- | rev_file line     { $2 :: $1 }
+ | rev_file expr     { $2 :: $1 }
 ;
 
-line:
+expr:
  | ID EQUALS ID      { ($1, String $3) }
  | ID EQUALS STRING  { ($1, String $3) }
 ;

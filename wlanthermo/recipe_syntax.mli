@@ -1,10 +1,10 @@
-(* recipe_syntax.mli -- abstract recipe file syntax. *)
+(* recipe_syntax.mli *) (** Abstract recipe file syntax. *)
 
 exception Lexical_Error of string * Lexing.position * Lexing.position
 
 type value =
   | String of string
 
-type line = string * value
+type expr = string * value
 
-type t = line list
+type t = expr list

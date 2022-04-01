@@ -33,9 +33,27 @@ rule token = parse
   | crlf              { new_line lexbuf; token lexbuf } (* count lines *)
   | '='        	      { EQUALS }
   | char word* as s   { ID s }
+  | '\''              { let sbuf = Buffer.create 20 in
+                        STRING (string1 sbuf lexbuf) }
+  | '"'               { let sbuf = Buffer.create 20 in
+                        STRING (string2 sbuf lexbuf) }
+  | eof               { END }
   | _ as c            { raise (Recipe_syntax.Lexical_Error
                                  ("invalid character `" ^ string_of_char c ^ "'",
                                   lexbuf.lex_start_p, lexbuf.lex_curr_p)) }
-  | eof               { END }
+
+(* complete a single quoted string *)
+and string1 sbuf = parse
+    '\''              { Buffer.contents sbuf }
+  | '\\' (esc as c)   { Buffer.add_char sbuf c; string1 sbuf lexbuf }
+  | eof               { raise End_of_file }
+  | _ as c            { Buffer.add_char sbuf c; string1 sbuf lexbuf }
+
+(* complete a double quoted string *)
+and string2 sbuf = parse
+    '"'               { Buffer.contents sbuf }
+  | '\\' (esc as c)   { Buffer.add_char sbuf c; string2 sbuf lexbuf }
+  | eof               { raise End_of_file }
+  | _ as c            { Buffer.add_char sbuf c; string2 sbuf lexbuf }
 
 
