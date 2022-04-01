@@ -3,6 +3,3 @@
 {1 Library wlanthermo}
 This library provides the toplevel modules
 {!modules:WLANThermo Recipe}
-
-and uses the libraries
-{!modules:ThoCurl ThoTime ThoList ThoString}

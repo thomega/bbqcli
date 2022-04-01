@@ -1,7 +1,6 @@
 (executable
   (name bbqcli)
   (public_name bbqcli)
-  (package wlanthermo)
   (modules Bbqcli)
   (flags (:standard -w -K))
   (ocamlopt_flags (:standard -inline 32))
@@ -18,17 +17,7 @@
   (ocamlopt_flags (:standard -inline 32))
   (libraries yojson tholib))
 
-(library
-  (name tholib)
-  (public_name tholib)
-  (modules ThoCurl ThoList ThoString ThoTime)
-  (wrapped false)
-  (flags (:standard -w -K))
-  (ocamlopt_flags (:standard -inline 32))
-  (libraries curl yojson))
-
 (documentation
-  (package wlanthermo)
   (mld_files index))
 
 (ocamllex recipe_lexer)
