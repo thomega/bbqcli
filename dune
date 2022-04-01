@@ -1,25 +1,35 @@
 (executable
   (name bbqcli)
   (public_name bbqcli)
+  (package wlanthermo)
   (modules Bbqcli)
   (flags (:standard -w -K))
   (ocamlopt_flags (:standard -inline 32))
-  (libraries cmdliner wlanthermo))
+  (libraries cmdliner tholib wlanthermo))
 
 (library
   (name wlanthermo)
   (public_name wlanthermo)
   (modules WLANThermo
-           Recipe Recipe_syntax Recipe_parser Recipe_lexer
-  	   ThoCurl ThoList ThoString ThoTime)
+           Recipe Recipe_syntax Recipe_parser Recipe_lexer)
 ; (private_modules Recipe_syntax Recipe_parser Recipe_lexer)
+  (wrapped false)
+  (flags (:standard -w -K))
+  (ocamlopt_flags (:standard -inline 32))
+  (libraries yojson tholib))
+
+(library
+  (name tholib)
+  (public_name tholib)
+  (modules ThoCurl ThoList ThoString ThoTime)
   (wrapped false)
   (flags (:standard -w -K))
   (ocamlopt_flags (:standard -inline 32))
   (libraries curl yojson))
 
 (documentation
- (mld_files index))
+  (package wlanthermo)
+  (mld_files index))
 
 (ocamllex recipe_lexer)
 (ocamlyacc recipe_parser)
