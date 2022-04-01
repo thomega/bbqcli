@@ -24,15 +24,15 @@ clean:
 	dune clean
 	rm -f *~ tholib/*~ wlanthermo/*~
 
-docs: README.md doc
-
-doc:
+docs:
 	dune build @doc
 
-README.md: all
-	./make_readme > $@
+readme: README.md
 
-publish: docs
+README.md: all
+	./share/make_readme > $@
+
+publish:
 	git checkout main
 	git merge -m "merge master into main for github" master
 	git checkout master
