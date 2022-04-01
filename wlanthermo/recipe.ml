@@ -44,21 +44,9 @@ let of_file = function
      close_in ic;
      recipe
 
-let contains_any chars s =
-  match List.find_opt (String.contains s) chars with
-  | None -> false
-  | Some _ -> true
-
-(* Incomplete ... *)
-let quote_string_if_necessary s =
-  if contains_any [' '; '\t'; '\n'; '\r'] s then
-    "\"" ^ s ^ "\""
-  else
-    s
-    
 let channel_to_string = function
   | R.Number n -> "@" ^ string_of_int n
-  | R.Name s -> "@" ^ quote_string_if_necessary s
+  | R.Name s -> "@" ^ ThoString.quote_string_if_necessary s
 
 let unary_to_string = function
   | R.Exp -> "exp"
@@ -67,7 +55,7 @@ let unary_to_string = function
 let value_to_string = function
   | R.Int n -> string_of_int n
   | R.Float x -> string_of_float x
-  | R.String s -> quote_string_if_necessary s
+  | R.String s -> ThoString.quote_string_if_necessary s
   | R.Channel ch -> channel_to_string ch
 
 let rec expr_to_string = function

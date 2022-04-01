@@ -31,6 +31,18 @@ let concat_padded_strings_list sep lenghts strings_list =
 let align_string_lists sep strings_list =
   concat_padded_strings_list sep (max_length strings_list) strings_list
 
+let contains_any chars s =
+  match List.find_opt (String.contains s) chars with
+  | None -> false
+  | Some _ -> true
+
+(* Incomplete ... *)
+let quote_string_if_necessary s =
+  if contains_any [' '; '\t'; '\n'; '\r'] s then
+    "\"" ^ s ^ "\""
+  else
+    s
+
 (*
 let _ =
   List.iter
