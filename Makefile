@@ -22,7 +22,7 @@ test:
 
 clean:
 	dune clean
-	rm -f *~
+	rm -f *~ tholib/*~ wlanthermo/*~
 
 docs: README.md doc
 
