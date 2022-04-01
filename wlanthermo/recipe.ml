@@ -14,7 +14,9 @@ let error_in_file name start_pos end_pos =
     end_pos.Lexing.pos_lnum
     (end_pos.Lexing.pos_cnum - end_pos.Lexing.pos_bol)
 
-type t = Recipe_syntax.t
+module R = Recipe_syntax
+
+type t = R.t
 
 let parse lexbuf =
   try
@@ -42,12 +44,17 @@ let of_file = function
      close_in ic;
      recipe
 
+let value_to_string = function
+  | R.String s -> "\"" ^ s ^ "\""
+  | R.Int n -> string_of_int n
+  | R.Float x -> string_of_float x
+
+let expr_to_string = function
+  | R.Value v -> value_to_string v
+
+let stmt_to_string = function
+  | R.Let (name, expr) -> name ^ " = " ^ expr_to_string expr
+
 let pretty_print recipe =
-  let open Recipe_syntax in
-  let open Printf in
-  List.iter
-    (fun (k, v) ->
-      match v with
-      | String v -> eprintf "%s = \"%s\"\n" k v)
-    recipe
+  List.map stmt_to_string recipe |> List.iter print_endline
 

@@ -3,8 +3,14 @@
 exception Lexical_Error of string * Lexing.position * Lexing.position
 
 type value =
+  | Int of int
+  | Float of float
   | String of string
 
-type expr = string * value
+type expr =
+  | Value of value
 
-type t = expr list
+type stmt =
+  | Let of string * expr
+
+type t = stmt list
