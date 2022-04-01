@@ -46,6 +46,9 @@ rule token = parse
 
   | "let"             { LET }
 
+  | "exp"             { UNARY Recipe_syntax.Exp }
+  | "tanh"            { UNARY Recipe_syntax.Tanh }
+
   | char word* as s   { ID s }
 
   | ( digit+ as i ) ( '.' '0'* )?

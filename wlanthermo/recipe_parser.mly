@@ -7,17 +7,18 @@ module R = Recipe_syntax
 %token < int > INT
 %token < float > FLOAT
 %token < string > ID STRING
+%token < Recipe_syntax.unary > UNARY
 %token AT
 %token PLUS MINUS TIMES DIV POWER
 %token EQUALS COMMA
 %token LPAREN RPAREN
-%token LET
+%token LET UNARY
 %token END
 
 %left PLUS MINUS
 %left TIMES DIV
 %left POWER
-%nonassoc UNARY
+%nonassoc PREFIX
 
 %start file
 %type < Recipe_syntax.t > file
@@ -37,16 +38,28 @@ rev_file:
 ;
 
 statement:
- | LET ID EQUALS value   { R.Let ($2, R.Value $4) }
+ | LET ID EQUALS expr    { R.Let ($2, $4) }
+;
+
+expr:
+ | value                    { R.Value $1 }
+ | UNARY LPAREN expr RPAREN { R.Unary ($1, $3) }
+ | expr PLUS expr           { R.Sum ($1, $3) }
 ;
 
 value:
- | INT                   { Int $1 }
- | FLOAT                 { Float $1 }
- | string                { String $1 }
+ | INT                   { R.Int $1 }
+ | FLOAT                 { R.Float $1 }
+ | string                { R.String $1 }
+ | channel               { R.Channel $1 }
+;
+
+channel:
+ | AT INT                { R.Number $2 }
+ | AT string             { R.Name $2 }
 ;
 
 string:
- | ID      { $1 }
- | STRING  { $1 }
+ | ID                    { $1 }
+ | STRING                { $1 }
 ;
