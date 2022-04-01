@@ -4,9 +4,20 @@
 module C = Recipe_syntax
 %}
 
+%token < int > INT
+%token < float > FLOAT
 %token < string > ID STRING
-%token EQUALS
+%token AT
+%token PLUS MINUS TIMES DIV POWER
+%token EQUALS COMMA
+%token LPAREN RPAREN
+%token LET
 %token END
+
+%left PLUS MINUS
+%left TIMES DIV
+%left POWER
+%nonassoc UNARY
 
 %start file
 %type < Recipe_syntax.t > file
@@ -26,7 +37,10 @@ rev_file:
 ;
 
 expr:
- | ID EQUALS ID      { ($1, String $3) }
- | ID EQUALS STRING  { ($1, String $3) }
+ | ID EQUALS string  { ($1, String $3) }
 ;
 
+string:
+ | ID      { $1 }
+ | STRING  { $1 }
+;
