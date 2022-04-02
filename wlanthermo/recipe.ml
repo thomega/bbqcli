@@ -14,9 +14,7 @@ let error_in_file name start_pos end_pos =
     end_pos.Lexing.pos_lnum
     (end_pos.Lexing.pos_cnum - end_pos.Lexing.pos_bol)
 
-module R = Recipe_syntax
-
-type t = R.t
+type t = Recipe_syntax.t
 
 let parse lexbuf =
   try
@@ -44,34 +42,6 @@ let of_file = function
      close_in ic;
      recipe
 
-let channel_to_string = function
-  | R.Number n -> "@" ^ string_of_int n
-  | R.Name s -> "@" ^ ThoString.quote_string_if_necessary s
-
-let unary_to_string = function
-  | R.Exp -> "exp"
-  | R.Tanh -> "tanh"
-
-let value_to_string = function
-  | R.Int n -> string_of_int n
-  | R.Float x -> string_of_float x
-  | R.String s -> ThoString.quote_string_if_necessary s
-  | R.Channel ch -> channel_to_string ch
-
-let rec expr_to_string = function
-  | R.Value v -> value_to_string v
-  | R.Unary (f, e) -> unary_to_string f ^ "(" ^ expr_to_string e ^ ")"
-  | R.Sum (e1, e2) -> binop_to_string " + " e1 e2
-  | R.Diff (e1, e2) -> binop_to_string " / " e1 e2
-  | R.Prod (e1, e2) -> binop_to_string " * " e1 e2
-  | R.Quot (e1, e2) -> binop_to_string " / " e1 e2
-  | R.Powr (e1, e2) -> binop_to_string "**" e1 e2
-and binop_to_string op e1 e2 =
-  "(" ^ expr_to_string e1 ^ ")" ^ op ^ "(" ^ expr_to_string e2 ^ ")"
-
-let stmt_to_string = function
-  | R.Let (name, e) -> name ^ " = " ^ expr_to_string e
-
 let pretty_print recipe =
-  List.map stmt_to_string recipe |> List.iter print_endline
+  List.map Recipe_syntax.stmt_to_string recipe |> List.iter print_endline
 
