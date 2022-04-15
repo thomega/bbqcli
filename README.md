@@ -119,6 +119,8 @@ COMMANDS
 
        pitmaster [OPTION]…
 
+       rename [OPTION]… CH CH
+
        settings [OPTION]…
 
        temperature [--all] [--channel=N[,M...]] [--channels=FROM-TO]
@@ -221,6 +223,73 @@ EXIT STATUS
 
 ENVIRONMENT
        These environment variables affect the execution of temperature:
+
+       WLANTHERMO_HOST
+           See option --host.
+
+       WLANTHERMO_SSL
+           See option --ssl.
+
+       WLANTHERMO_TIMEOUT
+           See option --timeout.
+
+       WLANTHERMO_VERBOSITY
+           See option --verbosity.
+
+SEE ALSO
+       bbqcli(1)
+
+</pre>
+## bbqcli rename
+<pre>
+NAME
+       bbqcli-rename
+
+SYNOPSIS
+       bbqcli rename [OPTION]… CH CH
+
+ARGUMENTS
+       CH (required)
+           The new name CH.
+
+       CH (required)
+           The channel CH to be renamed.
+
+COMMON OPTIONS
+       -H HOST, --host=HOST (absent=wlanthermo or WLANTHERMO_HOST env)
+           Connect to the host HOST.
+
+       --help[=FMT] (default=auto)
+           Show this help in format FMT. The value FMT must be one of auto,
+           pager, groff or plain. With auto, the format is pager or plain
+           whenever the TERM env var is dumb or undefined.
+
+       -s [true/false], --ssl[=true/false] (default=true) (absent=false or
+       WLANTHERMO_SSL env)
+           Use SSL to connect to the host. This option should never be
+           necessary or even used, because WLANThermo does not understand
+           SSL.
+
+       -T SECONDS, --timeout=SECONDS (absent WLANTHERMO_TIMEOUT env)
+           Wait only SECONDS for response.
+
+       -v VERBOSITY, --verbosity=VERBOSITY, --verbose=VERBOSITY (absent=0 or
+       WLANTHERMO_VERBOSITY env)
+           Be more verbose.
+
+EXIT STATUS
+       rename exits with the following status:
+
+       0   on success.
+
+       123 on indiscriminate errors reported on standard error.
+
+       124 on command line parsing errors.
+
+       125 on unexpected internal errors (bugs).
+
+ENVIRONMENT
+       These environment variables affect the execution of rename:
 
        WLANTHERMO_HOST
            See option --host.
