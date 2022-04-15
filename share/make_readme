@@ -4,7 +4,7 @@
 
 cat share/README.intro
 
-for subcmd in "" temperature alarm monitor pitmaster control chef; do
+for subcmd in "" temperature rename alarm monitor pitmaster control chef; do
   echo "## bbqcli $subcmd"
   echo "<pre>"
   dune exec -- ./bbqcli.exe "$subcmd" --help=plain \
