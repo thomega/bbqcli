@@ -43,11 +43,5 @@ let of_file = function
      recipe
 
 let pretty_print recipe =
-  let open Recipe_syntax in
-  let open Printf in
-  List.iter
-    (fun (k, v) ->
-      match v with
-      | String v -> eprintf "%s = \"%s\"\n" k v)
-    recipe
+  List.map Recipe_syntax.stmt_to_string recipe |> List.iter print_endline
 

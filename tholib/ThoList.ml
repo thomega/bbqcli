@@ -1,6 +1,7 @@
 (* ThoList.ml -- useful stuff missing from List *)
 
-(* NOT tail recursive, due to the cons! *)
+(* NOT tail recursive, due to the cons!
+   Starting with ocaml 4.14.0 we can use [let[@tail_mod_cons]] here. *)
 let range ?(stride=1) n1 n2 =
   if stride <= 0 then
     invalid_arg "range: stride <= 0"
@@ -12,7 +13,8 @@ let range ?(stride=1) n1 n2 =
         n :: range' (n + stride) in
     range' n1
 
-(* NOT tail recursive, due to the cons! *)
+(* NOT tail recursive, due to the cons!
+   Starting with ocaml 4.14.0 we can use [let[@tail_mod_cons]] here. *)
 let rec uniq' x = function
   | [] -> []
   | x' :: rest ->
@@ -39,7 +41,9 @@ let merge_integer_ranges integer_lists ranges =
   compress (List.concat (integer_lists @ expand_ranges (List.concat ranges)))
 
 (* Pairwise combine the elements of two lists of different length,
-   padding the short of the two lists, if necessary. *)
+   padding the short of the two lists, if necessary.
+   Starting with ocaml 4.14.0 we can remove [acc] in favor of
+   [let[@tail_mod_cons]] here. *)
 let splice op pad1 pad2 l1 l2 =
   let rec splice' acc = function
     | [], [] -> List.rev acc
