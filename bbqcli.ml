@@ -120,6 +120,11 @@ module type Unit_Cmd =
 module Temperature : Unit_Cmd =
   struct
 
+    let man = [
+        `S Manpage.s_description;
+        `P "List the current temperature measurements \
+            and associated alarms." ] @ Common.man_footer
+
     let print_temperatures ?all common channels =
       WT.format_channels ?all common channels |> List.iter print_endline
 
@@ -133,12 +138,16 @@ module Temperature : Unit_Cmd =
       $ Channels.term
 
     let cmd =
-      Cmd.v (Cmd.info "temperature") term
+      Cmd.v (Cmd.info "temperature" ~man) term
 
 end
 
 module Rename : Unit_Cmd =
   struct
+
+    let man = [
+        `S Manpage.s_description;
+        `P "Rename a channel." ] @ Common.man_footer
 
     (* int *)
     let channel_arg =
@@ -164,12 +173,17 @@ module Rename : Unit_Cmd =
       $ name_arg
 
     let cmd =
-      Cmd.v (Cmd.info "rename") term
+      Cmd.v (Cmd.info "rename" ~man) term
 
 end
 
 module Alarm : Unit_Cmd =
   struct
+
+    let man = [
+        `S Manpage.s_description;
+        `P "Change temperature ranges and associated \
+            alarms." ] @ Common.man_footer
 
     (* Put the long form of equivalent options last so that they are
        used for the description of the default in the manpage. *)
