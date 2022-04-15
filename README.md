@@ -119,7 +119,7 @@ COMMANDS
 
        pitmaster [OPTION]…
 
-       rename [OPTION]… CH CH
+       rename [OPTION]… CH NAME
 
        settings [OPTION]…
 

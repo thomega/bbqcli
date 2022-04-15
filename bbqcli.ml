@@ -154,7 +154,7 @@ module Rename : Unit_Cmd =
       let open Arg in
       required
       & pos 1 (some string) None
-      & info [] ~docv:"CH" ~doc
+      & info [] ~docv:"NAME" ~doc
 
     let term =
       let open Term in
