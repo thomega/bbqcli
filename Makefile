@@ -32,8 +32,9 @@ readme: README.md
 README.md: all
 	./share/make_readme > $@
 
+# This is potentially dangerous if the merge fails!
 publish:
-	git checkout main
-	git merge -m "merge master into main for github" master
-	git checkout master
-	git push -u github main
+	git checkout main \
+	&& git merge -m "merge master into main for github" master \
+	&& git checkout master \
+	&& git push -u github main
