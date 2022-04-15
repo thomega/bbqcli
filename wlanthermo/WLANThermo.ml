@@ -305,6 +305,7 @@ module type Channel =
       ThoCurl.options -> ?all:bool ->
       ?range:(float * float) -> ?min:float -> ?max:float ->
       ?push:switch -> ?beep:switch -> t list -> int -> unit
+    val rename : ThoCurl.options -> t list -> int -> string -> unit
   end
 
 module Channel : Channel =
@@ -463,6 +464,9 @@ module Channel : Channel =
       | None -> ch
       | Some on_off -> apply_alarm Alarm.beep ch on_off
 
+    let apply_name name ch =
+      { ch with mod_name = Some name }
+
     let update options ?(all=false) ?range ?min ?max ?push ?beep available ch =
       match find_opt available ch with
       | None -> ()
@@ -483,6 +487,20 @@ module Channel : Channel =
               failwith ("unexpected: " ^ JSON.to_string response)
          else
            ()
+
+    let rename options available ch name =
+      match find_opt available ch with
+      | None -> ()
+      | Some channel ->
+         let command =
+           unchanged channel
+           |> apply_name name
+           |> mod_to_json in
+         match ThoCurl.post_json options "setchannels" command with
+         | `Bool true -> ()
+         | `Bool false -> failwith "response: false"
+         | response ->
+            failwith ("unexpected: " ^ JSON.to_string response)
 
   end
 
@@ -862,6 +880,10 @@ let update_channels common ?all ?range ?min ?max ?push ?beep channels =
     | [] -> List.map (fun ch -> ch.Channel.number) available
     | ch_list -> ch_list in
   List.iter (Channel.update common ?all ?range ?min ?max ?push ?beep available) all_channels
+
+let rename_channel common channel name =
+  let available = get_data common |> Data.channels_of_json in
+  Channel.rename common available channel name
 
 let update_pitmaster common ?channel ?auto ?manual ~recall ~off pitmaster =
   get_data common |> Data.pitmasters_of_json

@@ -43,6 +43,9 @@ val update_channels :
   ?range:(float * float) -> ?min:float -> ?max:float ->
   ?push:switch -> ?beep:switch -> int list -> unit
 
+(** [rename_channel ch name] change the name of channel [ch] to [name]. *)
+val rename_channel : ThoCurl.options -> int -> string -> unit
+
 (** [update_pitmaster server ~channel ~auto:temperature ~manual:percentage ~recall ~off pm]
     updates the pitmaster [pm].  Note that [off] overrides [manual]
     overrides [auto] overrides [recall] of the previous setting. *)

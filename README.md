@@ -119,6 +119,8 @@ COMMANDS
 
        pitmaster [OPTION]…
 
+       rename [OPTION]… CH NAME
+
        settings [OPTION]…
 
        temperature [--all] [--channel=N[,M...]] [--channels=FROM-TO]

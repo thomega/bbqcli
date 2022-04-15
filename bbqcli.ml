@@ -137,6 +137,37 @@ module Temperature : Unit_Cmd =
 
 end
 
+module Rename : Unit_Cmd =
+  struct
+
+    (* int *)
+    let channel_arg =
+      let doc = "The channel $(docv) to be renamed." in
+      let open Arg in
+      required
+      & pos 0 (some int) None
+      & info [] ~docv:"CH" ~doc
+
+    (* string *)
+    let name_arg =
+      let doc = "The new name $(docv)." in
+      let open Arg in
+      required
+      & pos 1 (some string) None
+      & info [] ~docv:"NAME" ~doc
+
+    let term =
+      let open Term in
+      const WT.rename_channel
+      $ Common.term
+      $ channel_arg
+      $ name_arg
+
+    let cmd =
+      Cmd.v (Cmd.info "rename") term
+
+end
+
 module Alarm : Unit_Cmd =
   struct
 
@@ -579,6 +610,7 @@ module Main : Unit_Cmd =
       Cmd.group
         (Cmd.info "bbqcli" ~man)
         [ Temperature.cmd;
+          Rename.cmd;
           Alarm.cmd;
           Pitmaster.cmd;
           Control.cmd;
